@@ -8,13 +8,13 @@ Implementation of Dijkstra's Algorithm to find the shortest path:
 3) Note: The code works as it is in my laptop.
 	 But, if the animation does not work on your end, remove parameter 's = 0.35' from the plt.scatter().
 
-	 a) Line 38: Change--> plt.scatter(x_obs, y_obs, marker = "s", s = 0.35, c = 'black')
+	 a) Line 39: Change--> plt.scatter(x_obs, y_obs, marker = "s", s = 0.35, c = 'black')
 		     To-->     plt.scatter(x_obs, y_obs, marker = "s", c = 'black')
 
-	 b) Line 40: Change--> plt.scatter(x_vis[i], y_vis[i], marker = "s", s = 0.35, c = 'green')
+	 b) Line 41: Change--> plt.scatter(x_vis[i], y_vis[i], marker = "s", s = 0.35, c = 'green')
 		     To-->     plt.scatter(x_vis[i], y_vis[i], marker = "s", c = 'green')
 
-	 c) Line 43: Change--> plt.scatter(x_opt[i], y_opt[i], marker = "s", s = 0.35, c = 'red')
+	 c) Line 44: Change--> plt.scatter(x_opt[i], y_opt[i], marker = "s", s = 0.35, c = 'red')
 		     To-->     plt.scatter(x_opt[i], y_opt[i], marker = "s", c = 'red')
 
 
