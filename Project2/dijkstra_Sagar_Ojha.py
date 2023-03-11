@@ -5,7 +5,6 @@ Author: Sagar Ojha (as03050@umd.edu)
 """
 import heapq as hq
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import time
 
 #--------------------------------------------------------------------------------------------------
@@ -27,7 +26,7 @@ def animate_Dijkstra(obstacle_points, visited_list, optimal_path):
     for i in visited_list:
         x_vis.append(i[2][0])
         y_vis.append(i[2][1])
-    
+
     x_opt = []
     y_opt = []
     for i in optimal_path:
@@ -75,7 +74,7 @@ def generate_node(parent_ctc, parent_state, unvisited_list, visited_list, obstac
     @param visited_list The list of nodes that are explored
     @param obstacle_points The list of coordinates inside the obstacle space
     @param action The action that is performed to get a new node state
-    @return None
+    @return None: Just updates the unvisited_list
     """
     child_state = (parent_state[0] + action[0], parent_state[1] + action[1])
     if ((action[0] == 0) or (action[1] == 0)):
@@ -113,8 +112,9 @@ def run_Dijkstra_algorithm(initial_x, initial_y, final_x, final_y, obstacle_poin
     @param obstacle_points Array of all the coordinates in the obstacle region
     @return None
     """
+    start = time.process_time()
     if (initial_x == final_x) and (initial_y == final_y):
-        print('The start and the end points are the same.')
+        print('The start and the end points are the same. Rerun the code with different values.')
         return
     # Each node has its cost-to-come, parent node and the state itself
     node_ctc = 0
@@ -141,58 +141,12 @@ def run_Dijkstra_algorithm(initial_x, initial_y, final_x, final_y, obstacle_poin
                 generate_node(current_node[0], current_node[2], unvisited_list,\
                                visited_list, obstacle_points, action)
         else:
-            print(f'Goal Reached with a cost of {current_node[0]}!!!')
+            print(f'Goal Reached with a cost of {current_node[0]}.')
             optimal_path = generate_path(visited_list)
+            print(f'Optimal path found in {time.process_time()-start} seconds.')
             animate_Dijkstra(obstacle_points, visited_list, optimal_path)
-            # fig = plt.figure()
-            # x_obs = []
-            # y_obs = []
-            # for i in obstacle_points:
-            #     x_obs.append(i[0])
-            #     y_obs.append(i[1])
-            
-            # plt.xlim([0,600])
-            # plt.ylim([0,250])
-            # plt.scatter(x_obs, y_obs, marker = "s", s = 0.35, c = 'black')
-
-            # x_animate, y_animate = [], []
-            # for i in visited_list:
-            #     x_animate.append(i[2][0])
-            #     y_animate.append(i[2][1])
-            # explored_num = len(x_animate)
-            # for j in optimal_path:
-            #     x_animate.append(j[0])
-            #     y_animate.append(j[1])
-            # print(x_animate)
-            # print(y_animate)
-            # x_anim, y_anim = [], []
-            # def animate(i):
-            #     x_anim.append(x_animate[i])
-            #     y_anim.append(y_animate[i])
-            #     if (i < explored_num):
-            #         plt.scatter(x_anim, y_anim, marker = "s", s = 0.35, c = 'green')
-            #     else:
-            #         plt.scatter(x_anim, y_anim, marker = "s", s = 0.35, c = 'red')
-            # # def animate_exploration(i):
-            # #     print(i)
-            # #     x_vis.append(visited_list[i][2][0])
-            # #     y_vis.append(visited_list[i][2][1])
-            # #     plt.scatter(x_vis, y_vis, marker = "s", s = 0.35, c = 'green')
-
-            # # x_opt = []
-            # # y_opt = []
-            # # def animate_optimal_path(i):
-            # #     x_opt.append(optimal_path[i][0])
-            # #     y_opt.append(optimal_path[i][1])
-            # #     plt.scatter(x_opt, y_opt, marker = "s", s = 0.35, c = 'red')
-
-            # # anim_exploration = FuncAnimation(fig, animate_exploration, frames=len(visited_list), interval=1, repeat=False)
-            # # # time.sleep(10)
-            # # anim_path = FuncAnimation(fig, animate_optimal_path, frames=len(optimal_path), interval=1, repeat=False)
-            # anim = FuncAnimation(fig, animate, frames=len(x_animate), interval=1, repeat=False, blit=True)
-            # plt.show()
             return
-    
+
     print(f'Goal Not Reached!!!')
     return
 #--------------------------------------------------------------------------------------------------
@@ -245,4 +199,4 @@ if __name__ =="__main__":
         final_x, final_y = input("Enter the final x and y position separated by a space: ").split()
 
     run_Dijkstra_algorithm(int(initial_x), int(initial_y), int(final_x), int(final_y), obstacle_points)
-    # (160, 100) to (90, 100)
+    # Start-->(460, 15): Goal-->(450, 15)
