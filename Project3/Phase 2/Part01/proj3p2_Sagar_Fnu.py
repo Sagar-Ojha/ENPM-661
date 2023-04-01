@@ -70,8 +70,7 @@ def configuration_space(clearance, threshold):
                 elif ((x*t <= (150 + c)) and (x*t >= (100 - c)) and (y*t <= 250) and (y*t >= (150 -c))):
                     entire_region[x][y] -= 1
 
-                # Inequalities defining the circular obstacle region
-                # Inequalities defining the bloated hexagonal obstacle region
+                # Inequalities defining the hexagonal obstacle region
                 # The coordinates of the vertices starting from the top and in clockwise direction are:
                 # (300, 200), (364.95, 162.5), (394.95, 87.5), (300, 50), (235.05, 87.5), (235.05, 162.5)
                 elif ((y*t <= (-0.577 * x*t + 373.21 + c)) and (x*t <= (364.95 + c)) \
