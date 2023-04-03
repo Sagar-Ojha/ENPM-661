@@ -136,9 +136,9 @@ def runner():
         final_x, final_y = world_to_matrix(final_x, final_y, threshold)
 
     test_plot(matrix_map, threshold, initial_x, initial_y)
-    # run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, final_orientation,\
-    #             obstacle_points, obstacle_points_clearance, obstacle_points_config, threshold,\
-    #             entire_region, step_size)
+    run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, final_orientation,\
+               obstacle_points, obstacle_points_clearance, obstacle_points_config, threshold,\
+               entire_region, step_size)
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
