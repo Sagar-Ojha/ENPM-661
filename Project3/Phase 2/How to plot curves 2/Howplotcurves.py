@@ -6,9 +6,9 @@ fig, ax = plt.subplots()
 
 def plot_curve(Xi,Yi,Thetai,UL,UR):
     t = 0
-    r = 0.038
-    L = 0.354
-    dt = 0.1
+    r = 3.3
+    L = 16
+    dt = 0.01
     Xn=Xi
     Yn=Yi
     Thetan = 3.14 * Thetai / 180
@@ -22,16 +22,17 @@ def plot_curve(Xi,Yi,Thetai,UL,UR):
         t = t + dt
         Xs = Xn
         Ys = Yn
-        Xn += 0.5*r * (UL + UR) * math.cos(Thetan) * dt
-        Yn += 0.5*r * (UL + UR) * math.sin(Thetan) * dt
-        Thetan += (r / L) * (UR - UL) * dt
+        Xn += 0.5*r * (UL + UR) * math.cos(Thetan) * dt /60
+        Yn += 0.5*r * (UL + UR) * math.sin(Thetan) * dt /60
+        Thetan += (r / L) * (UR - UL) * dt /60
         plt.plot([Xs, Xn], [Ys, Yn], color="blue")
         
     Thetan = 180 * (Thetan) / 3.14
     return Xn, Yn, Thetan, D
     
 
-actions=[[5,5], [10,10],[5,0],[0,5],[5,10],[10,5]]
+# actions=[[5,5], [10,10],[5,0],[0,5],[5,10],[10,5]]
+actions = [[0,50], [0,100],[50,0],[100,0],[50,100],[100,50],[50,50],[100,100]]
         
 for action in actions:
    X1= plot_curve(0,0,45, action[0],action[1]) # (0,0,45) hypothetical start configuration
@@ -46,8 +47,8 @@ plt.grid()
 
 ax.set_aspect('equal')
 
-plt.xlim(0,1)
-plt.ylim(0,1)
+# plt.xlim(0,1)
+# plt.ylim(0,1)
 
 plt.title('How to plot a vector in matplotlib ?',fontsize=10)
 

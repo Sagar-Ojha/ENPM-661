@@ -90,8 +90,8 @@ def world_to_matrix(x, y, t):
     y_new = y + 100
     
     # The corresponding indices in the matrix_map would different owing to the threshold value
-    x_mat = int(x_new / t)
-    y_mat = int(y_new / t)
+    x_mat = round(x_new / t)
+    y_mat = round(y_new / t)
 
     return x_mat, y_mat
 #--------------------------------------------------------------------------------------------------
@@ -115,22 +115,22 @@ def runner():
     # Need to translate the coordinates from the user, which is given w.r.t the map in Gazebo (pg# 18)
     # to the matrix coordinates that is being implemented. That is because the Gazebo map has negative values as well
     # whereas, we are implementing map in matrix whose indices start from [0,0].
-    initial_x, initial_y = world_to_matrix(initial_x, initial_y, threshold)
+    initial_x_mat, initial_y_mat = world_to_matrix(initial_x, initial_y, threshold)
 
-    while (matrix_map[initial_x, initial_y] < 0):
+    while (matrix_map[initial_x_mat, initial_y_mat] < 0):
         print("The values are either in obstacle space or out of bound. Try again!")
         initial_x, initial_y = map(int,input("Enter the starting x and y position in cm separated by a space: ").split())
-        initial_x, initial_y = world_to_matrix(initial_x, initial_y, threshold)
+        initial_x_mat, initial_y_mat = world_to_matrix(initial_x, initial_y, threshold)
 
     initial_orientation = 0#int(input('Enter the starting orientation of the robot (in deg): '))
 
     final_x, final_y = 0,0#map(int,input("Enter the final x and y position in cm separated by a space: ").split())
-    final_x, final_y = world_to_matrix(final_x, final_y, threshold)
+    final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
-    while (matrix_map[final_x, final_y] < 0):
+    while (matrix_map[final_x_mat, final_y_mat] < 0):
         print("The values are either in obstacle space or out of bound. Try again!")
         final_x, final_y = map(int,input("Enter the final x and y position in cm separated by a space: ").split())
-        final_x, final_y = world_to_matrix(final_x, final_y, threshold)
+        final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
     test_plot(matrix_map, threshold, initial_x, initial_y)
     # run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, final_orientation,\
