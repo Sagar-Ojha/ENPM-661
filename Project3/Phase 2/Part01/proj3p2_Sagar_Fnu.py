@@ -9,6 +9,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import cv2
+import pygame
 
 #--------------------------------------------------------------------------------------------------
 def test_plot(matrix_map, threshold, exploration, optimal_path): #TODO: remove afterwards...This is just for quick validations
@@ -60,7 +61,7 @@ def test_plot(matrix_map, threshold, exploration, optimal_path): #TODO: remove a
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def animate_A_star(matrix_map, threshold, exploration, optimal_path):
+def animate_A_star(matrix_map, threshold, exploration, optimal_path, parent_dict):
 
     # Create a named window with the WINDOW_NORMAL flag
     cv2.namedWindow('Animation', cv2.WINDOW_NORMAL)
@@ -97,20 +98,39 @@ def animate_A_star(matrix_map, threshold, exploration, optimal_path):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     display_canvas_anim = display_canvas.copy()
-    for i in range(len(exploration)):
-        curve = exploration[i][5]
-        for j in range(len(curve)-1):
-            x1 = int(curve[j][0])
-            y1 = int(curve[j][1])
-            y1 = 250 - y1
-            x2 = int(curve[j+1][0])
-            y2 = int(curve[j+1][1])
-            y2 = 250 - y2
-            cv2.line(display_canvas_anim, (x1, y1), (x2, y2), (0, 0, 255), 2)
-        cv2.imshow('Animation', display_canvas_anim)
+    scale_percent = 310  # percent of original size
+    width = int(display_canvas_anim.shape[1] * scale_percent / 100)
+    height = int(display_canvas_anim.shape[0] * scale_percent / 100)
+    new_canvas = cv2.resize(display_canvas_anim, (width, height), interpolation=cv2.INTER_LINEAR)
+
+    for key, value in parent_dict.items():
+        for child in value:
+            intermediate_steps  = child[1]
+            for j in range(len(intermediate_steps)-1):
+                x1 = int(intermediate_steps[j][0] * scale_percent / 100)
+                y1 = int(intermediate_steps[j][1] * scale_percent / 100)
+                y1 = height - y1
+                x2 = int(intermediate_steps[j+1][0] * scale_percent / 100)
+                y2 = int(intermediate_steps[j+1][1] * scale_percent / 100)
+                y2 = height - y2
+                cv2.line(new_canvas, (x1, y1), (x2, y2), (255, 0, 0), 1)
+        cv2.imshow('Animation', new_canvas)
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
+            break
+    
+    for i in range(len(optimal_path) - 1):
+        x1 = int(optimal_path[i][0] * scale_percent / 100)
+        y1 = int(optimal_path[i][1] * scale_percent / 100)
+        y1 = height - y1
+        x2 = int(optimal_path[i+1][0] * scale_percent / 100)
+        y2 = int(optimal_path[i+1][1] * scale_percent / 100)
+        y2 = height - y2
+        cv2.line(new_canvas, (x1, y1), (x2, y2), (0, 255, 0), 1)
+        cv2.imshow('Optimal Path', new_canvas)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
 
+    cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 #--------------------------------------------------------------------------------------------------
@@ -205,7 +225,7 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
     else: return
 
     # print(child_state)
-    
+
     # Update the parent-child dictionary
     if parent_state in parent_dict:
         parent_dict[parent_state].append((child_state, intermediate_steps))
@@ -305,7 +325,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
             #print(optimal_path)
             print(f'Optimal path found in {time.process_time()-start} seconds.')
             test_plot(matrix_map, threshold, visited_list, optimal_path)
-            animate_A_star(matrix_map, threshold, visited_list, optimal_path)
+            animate_A_star(matrix_map, threshold, visited_list, optimal_path, parent_dict)
 
 
     return
