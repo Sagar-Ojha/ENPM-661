@@ -167,7 +167,7 @@ def duplicate_node_check(x_mat, y_mat, matrix_map, child_ctc):
 
 #--------------------------------------------------------------------------------------------------
 def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, step_size,\
-                  threshold, final_x, final_y, wheel_radius, wheel_distance):#TODO: Debug
+                  threshold, final_x, final_y, wheel_radius, wheel_distance, parent_dict):#TODO: Debug
     """! Generates a new node after performing the action
     @param parent_ctc The parent node state cost to come
     @param parent_state The parent node state (x, y, theta)
@@ -205,6 +205,12 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
     else: return
 
     # print(child_state)
+    
+    # Update the parent-child dictionary
+    if parent_state in parent_dict:
+        parent_dict[parent_state].append((child_state, intermediate_steps))
+    else:
+        parent_dict[parent_state] = [(child_state, intermediate_steps)]
 
     child_ctg = eucledian_distance(child_state[0], child_state[1], final_x, final_y)
     child_total_cost = child_ctc + child_ctg
@@ -269,6 +275,8 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
     hq.heappush(unvisited_list, node)
     # visited_list stores the nodes that are explored
     visited_list = []
+    #parent_dict stores the parent state as key and the child state and intermediates steps as value
+    parent_dict = {}
     # action_set stores the allowed actions that can be performed on the node_state
     action_set = [[0,rpm1],[rpm1,0],[rpm1,rpm1],[0,rpm2],[rpm2,0],[rpm2,rpm2],[rpm1,rpm2],[rpm2,rpm1]]
 
@@ -289,7 +297,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
         if goal_reached != "yes":
             for action in action_set:
                 generate_node(current_node[1], current_node[4], unvisited_list, matrix_map, action,\
-                              step_size, threshold, final_x, final_y, wheel_radius, wheel_distance)
+                              step_size, threshold, final_x, final_y, wheel_radius, wheel_distance, parent_dict)
         else:
             print(f'Goal Reached with a cost of {current_node[0]}.')
             start = time.process_time()
