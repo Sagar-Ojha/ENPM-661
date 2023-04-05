@@ -60,6 +60,62 @@ def test_plot(matrix_map, threshold, exploration, optimal_path): #TODO: remove a
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
+def animate_A_star(matrix_map, threshold, exploration, optimal_path):
+
+    # Create a named window with the WINDOW_NORMAL flag
+    cv2.namedWindow('Animation', cv2.WINDOW_NORMAL)
+
+    # Set the window to be resizable and maximize it
+    cv2.resizeWindow('Animation', 800, 600)  # Set an initial size for the window
+    cv2.setWindowProperty('Animation', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    t = threshold
+    display_canvas = np.zeros((251, 601, 3), np.uint8)
+    
+    #node = [node_total_cost, node_ctc, node_ctg, node_parent, node_state, intermediate_states]
+    #node_state = (initial_x, initial_y, initial_orientation)
+
+
+    for i in range(len(matrix_map)):
+        for j in range(len(matrix_map[i])):
+            if matrix_map[i][j] == -1:
+                x = int(j*t)
+                y = int(i*t)
+                display_canvas[(x, y)] = [0, 0, 255]
+                
+            if matrix_map[i][j] == -2:
+                x = int(j*t)
+                y = int(i*t)
+                display_canvas[(x, y)] = [0, 255, 0]
+
+            if matrix_map[i][j] == -3:
+                x = int(j*t)
+                y = int(i*t)
+                display_canvas[(x, y)] = [255, 0, 0]
+
+    display_canvas = np.flipud(display_canvas)
+    cv2.imshow('A*', display_canvas)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    display_canvas_anim = display_canvas.copy()
+    for i in range(len(exploration)):
+        curve = exploration[i][5]
+        for j in range(len(curve)-1):
+            x1 = int(curve[j][0])
+            y1 = int(curve[j][1])
+            y1 = 250 - y1
+            x2 = int(curve[j+1][0])
+            y2 = int(curve[j+1][1])
+            y2 = 250 - y2
+            cv2.line(display_canvas_anim, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        cv2.imshow('Animation', display_canvas_anim)
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
+            break
+
+    cv2.destroyAllWindows()
+
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
 def generate_path(visited_list):
     """! Backtracking algorithm that finds the optimal path.
     @param visited_list The array of nodes that are explored
@@ -238,8 +294,10 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
             print(f'Goal Reached with a cost of {current_node[0]}.')
             start = time.process_time()
             optimal_path = generate_path(visited_list)
+            #print(optimal_path)
             print(f'Optimal path found in {time.process_time()-start} seconds.')
             test_plot(matrix_map, threshold, visited_list, optimal_path)
+            animate_A_star(matrix_map, threshold, visited_list, optimal_path)
 
 
     return
