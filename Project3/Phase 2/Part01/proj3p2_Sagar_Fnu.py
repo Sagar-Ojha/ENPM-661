@@ -142,7 +142,7 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
                   threshold, final_x, final_y, wheel_radius, wheel_distance, parent_dict):#TODO: Debug
     """! Generates a new node after performing the action
     @param parent_ctc The parent node state cost to come
-    @param parent_state The parent node state (x, y, theta)
+    @param parent_state The parent node state (x, y, θ)
     @param unvisited_list The list of nodes to explore
     @param entire_region The entire configuration space map
     @param action The action that is performed to get a new node state
@@ -156,24 +156,24 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
     rpm1, rpm2 = action[0], action[1]
     dt = 0.1    # Fine tune dt as per need
     t = 0
-    x_prev, y_prev, theta_prev = parent_state[0], parent_state[1], parent_state[2]
+    x_prev, y_prev, θ_prev = parent_state[0], parent_state[1], parent_state[2]
     intermediate_steps = []
     obstacle = "no"
     child_ctc = parent_ctc
     while ((t < step_size) and (obstacle == "no")):
-        x_new = x_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * np.cos(theta_prev) * dt / 60)
-        y_new = y_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * np.sin(theta_prev) * dt / 60)
-        theta_new = theta_prev + ((wheel_radius / wheel_distance) * (rpm2 - rpm1) * dt / 60)
+        x_new = x_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * np.cos(θ_prev) * dt / 60)
+        y_new = y_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * np.sin(θ_prev) * dt / 60)
+        θ_new = θ_prev + ((wheel_radius / wheel_distance) * (rpm2 - rpm1) * dt / 60)
         x_new_mat, y_new_mat = world_to_matrix(x_new, y_new, threshold)
         if (matrix_map[x_new_mat][y_new_mat] < 0):
             obstacle = "yes"
         else:
             child_ctc += eucledian_distance(x_prev, y_prev, x_new, y_new)
-            x_prev, y_prev, theta_prev = x_new, y_new, theta_new
+            x_prev, y_prev, θ_prev = x_new, y_new, θ_new
             intermediate_steps.append((x_prev, y_prev))
         t += dt
     
-    if (t != dt): child_state = (x_prev, y_prev, theta_prev)
+    if (t != dt): child_state = (x_prev, y_prev, θ_prev)
     else: return
 
     # Update the parent-child dictionary
@@ -339,18 +339,17 @@ def world_to_matrix(x, y, t): # Unlike in part02, this function doesn't translat
 def runner():
     # TurtleBot3 Burger dimensions are 13.8 x 17.8 x 19.2 cm^3 with an outer radius of 10.5 cm
     # The wheel radius is 3.3 cm and distance between wheels is 16 cm approximately
-    clearance = 1.5#int(input(f'Enter the clearance amount (mm): '))/10
+    clearance = int(input(f'Enter the clearance amount (mm): ')) / 10
     robot_radius = 10.5
     wheel_radius = 3.3
     wheel_distance = 16
-    threshold = 0.5 # Size of a unit length in map. Also, this determines the size of the matrix_map
-    step_size = 5#float(input(f'Enter the step size of the robot (in seconds): '))
-    rpm1, rpm2 = 50,100#map(int, input("Enter the 2 sets of wheel rpms separated by a space: ").split())
+    threshold = 1 # Size of a unit length in map. Thus, this determines the size of the matrix_map
+    step_size = 1#float(input(f'Enter the step size of the robot (in seconds): '))
 
     # matrix_map is a matrix of obstacle region and free space
     matrix_map = configuration_space([clearance + robot_radius, clearance, 0], threshold) # Maintain the sequence
 
-    initial_x, initial_y = 20,20#map(int,input("Enter the starting x and y position in cm separated by a space: ").split())
+    initial_x, initial_y = map(int,input("Enter the starting x and y position in cm separated by a space: ").split())
     initial_x_mat, initial_y_mat = world_to_matrix(initial_x, initial_y, threshold)
 
     while (matrix_map[initial_x_mat, initial_y_mat] < 0):
@@ -358,15 +357,17 @@ def runner():
         initial_x, initial_y = map(int,input("Enter the starting x and y position in cm separated by a space: ").split())
         initial_x_mat, initial_y_mat = world_to_matrix(initial_x, initial_y, threshold)
 
-    initial_orientation = 0#int(input('Enter the starting orientation of the robot (in deg): ')) * np.pi / 180
+    initial_orientation = int(input('Enter the starting orientation of the robot (in deg): ')) * np.pi / 180
 
-    final_x, final_y = 200,120#map(int,input("Enter the final x and y position in cm separated by a space: ").split())
+    final_x, final_y = map(int,input("Enter the final x and y position in cm separated by a space: ").split())
     final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
     while (matrix_map[final_x_mat, final_y_mat] < 0):
         print("The values are either in obstacle space or out of bound. Try again!")
         final_x, final_y = map(int,input("Enter the final x and y position in cm separated by a space: ").split())
         final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
+
+    rpm1, rpm2 = map(int, input("Enter the 2 sets of wheel rpms separated by a space: ").split())
 
     run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, threshold, matrix_map,\
                wheel_radius, wheel_distance, rpm1, rpm2, step_size)
