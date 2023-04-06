@@ -4,65 +4,18 @@ Date: 4/07/2023
 Author: Sagar Ojha (as03050@umd.edu), Fnu Obaid Ur Rahman (obdurhmn@umd.edu)
 """
 import heapq as hq
-import math as ma
 import numpy as np
 import time
-import matplotlib.pyplot as plt
 import cv2
-import pygame
 
 #--------------------------------------------------------------------------------------------------
-def test_plot(matrix_map, threshold, exploration, optimal_path): #TODO: remove afterwards...This is just for quick validations
-    # matrix_map is not equivalent to physical map
-    # convert the indices in matrix to physical coordinates by multiplying by the threshold amount
-    t = threshold
-    ob_x = []
-    ob_y = []
-    cl_x = []
-    cl_y = []
-    bl_x = []
-    bl_y = []
-
-    for i in range(len(matrix_map)):
-        for j in range(len(matrix_map[i])):
-            if matrix_map[i][j] == -1:
-                bl_x.append(i*t)
-                bl_y.append(j*t)
-            if matrix_map[i][j] == -2:
-                cl_x.append(i*t)
-                cl_y.append(j*t)
-            if matrix_map[i][j] == -3:
-                ob_x.append(i*t)
-                ob_y.append(j*t)
-    
-    ex_x = []
-    ex_y = []
-
-    for i in range(len(exploration)):
-        ex_x.append(exploration[i][4][0])
-        ex_y.append(exploration[i][4][1])
-    
-    opt_x = []
-    opt_y = []
-
-    for i in optimal_path:
-        opt_x.append(i[0])
-        opt_y.append(i[1])
-    
-    plt.xlim([0,600])
-    plt.ylim([0,250])
-    plt.scatter(ob_x, ob_y, s = 0.35, color = 'red')
-    plt.scatter(cl_x, cl_y, s = 0.35, color = 'green')
-    plt.scatter(bl_x, bl_y, s = 0.35, color = 'black')
-    plt.scatter(ex_x, ex_y, s = 0.35, color = 'green')
-    plt.plot(opt_x, opt_y, color = 'purple')
-    # plt.plot([200,x],[50,y], color = 'purple')
-    plt.show()
-#--------------------------------------------------------------------------------------------------
-
-#--------------------------------------------------------------------------------------------------
-def animate_A_star(matrix_map, threshold, exploration, optimal_path, parent_dict):
-
+def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
+    """! Animates nodes exploration and the optimal path
+    @param matrix_map
+    @param threshold
+    @param optimal_path
+    @param parent_dict
+    """
     # Create a named window with the WINDOW_NORMAL flag
     cv2.namedWindow('Animation', cv2.WINDOW_NORMAL)
 
@@ -74,7 +27,6 @@ def animate_A_star(matrix_map, threshold, exploration, optimal_path, parent_dict
     
     #node = [node_total_cost, node_ctc, node_ctg, node_parent, node_state, intermediate_states]
     #node_state = (initial_x, initial_y, initial_orientation)
-
 
     for i in range(len(matrix_map)):
         for j in range(len(matrix_map[i])):
@@ -95,8 +47,9 @@ def animate_A_star(matrix_map, threshold, exploration, optimal_path, parent_dict
 
     display_canvas = np.flipud(display_canvas)
     cv2.imshow('A*', display_canvas)
-    cv2.waitKey(0)
+    cv2.waitKey(1)
     cv2.destroyAllWindows()
+
     display_canvas_anim = display_canvas.copy()
     scale_percent = 310  # percent of original size
     width = int(display_canvas_anim.shape[1] * scale_percent / 100)
@@ -113,7 +66,7 @@ def animate_A_star(matrix_map, threshold, exploration, optimal_path, parent_dict
                 x2 = int(intermediate_steps[j+1][0] * scale_percent / 100)
                 y2 = int(intermediate_steps[j+1][1] * scale_percent / 100)
                 y2 = height - y2
-                cv2.line(new_canvas, (x1, y1), (x2, y2), (255, 0, 0), 1)
+                cv2.line(new_canvas, (x1, y1), (x2, y2), (0, 255, 255), 1)
         cv2.imshow('Animation', new_canvas)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
@@ -125,14 +78,13 @@ def animate_A_star(matrix_map, threshold, exploration, optimal_path, parent_dict
         x2 = int(optimal_path[i+1][0] * scale_percent / 100)
         y2 = int(optimal_path[i+1][1] * scale_percent / 100)
         y2 = height - y2
-        cv2.line(new_canvas, (x1, y1), (x2, y2), (0, 255, 0), 1)
+        cv2.line(new_canvas, (x1, y1), (x2, y2), (160, 32, 240), 3)
         cv2.imshow('Optimal Path', new_canvas)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
@@ -209,8 +161,8 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
     obstacle = "no"
     child_ctc = parent_ctc
     while ((t < step_size) and (obstacle == "no")):
-        x_new = x_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * ma.cos(theta_prev) * dt / 60)
-        y_new = y_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * ma.sin(theta_prev) * dt / 60)
+        x_new = x_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * np.cos(theta_prev) * dt / 60)
+        y_new = y_prev + ((wheel_radius / 2) * (rpm1 + rpm2) * np.sin(theta_prev) * dt / 60)
         theta_new = theta_prev + ((wheel_radius / wheel_distance) * (rpm2 - rpm1) * dt / 60)
         x_new_mat, y_new_mat = world_to_matrix(x_new, y_new, threshold)
         if (matrix_map[x_new_mat][y_new_mat] < 0):
@@ -223,8 +175,6 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
     
     if (t != dt): child_state = (x_prev, y_prev, theta_prev)
     else: return
-
-    # print(child_state)
 
     # Update the parent-child dictionary
     if parent_state in parent_dict:
@@ -242,7 +192,6 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
         child_node = [child_total_cost, child_ctc, child_ctg, parent_state, child_state, intermediate_steps]
         hq.heappush(unvisited_list, child_node)
     elif flag == "CTC is changed":
-        # print("CTC Changed")
         for i in range(len(unvisited_list)):
             if (unvisited_list[i][4] == child_state):
                 unvisited_list[i][0] = child_total_cost
@@ -307,8 +256,6 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
 
     while ((unvisited_list != []) and (goal_reached != "yes")):
         current_node = hq.heappop(unvisited_list) # Node that has lowest total-cost is being explored
-        # node_state = current_node[-1]
-        # print(current_node)
         visited_list.append(current_node)
 
         if (current_node[2] <= 1.5):
@@ -322,11 +269,8 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
             print(f'Goal Reached with a cost of {current_node[0]}.')
             start = time.process_time()
             optimal_path = generate_path(visited_list)
-            #print(optimal_path)
             print(f'Optimal path found in {time.process_time()-start} seconds.')
-            test_plot(matrix_map, threshold, visited_list, optimal_path)
-            animate_A_star(matrix_map, threshold, visited_list, optimal_path, parent_dict)
-
+            animate_A_star(matrix_map, threshold, optimal_path, parent_dict)
 
     return
 #--------------------------------------------------------------------------------------------------
@@ -368,8 +312,8 @@ def configuration_space(clearance, threshold):
                     entire_region[x][y] -= 1
                 
                 # Inequalities defining the triangular obstacle region
-                elif (((y*t <= (-2 * x*t + 1145 + c/ma.cos(ma.atan(-2)))) \
-                    and (y*t >= (2 * x*t - 895 - c/ma.cos(ma.atan(2)))) and (x*t >= (460 - c)) \
+                elif (((y*t <= (-2 * x*t + 1145 + c/np.cos(np.arctan(-2)))) \
+                    and (y*t >= (2 * x*t - 895 - c/np.cos(np.arctan(2)))) and (x*t >= (460 - c)) \
                     and (y*t >= 25) and (y*t <= 225)) or ((((x*t-460)**2 + (y*t-25)**2) <= (c)**2) \
                                                     or ((x*t-460)**2 + (y*t-225)**2 <= (c)**2))):
                     entire_region[x][y] -= 1
@@ -400,7 +344,7 @@ def runner():
     wheel_radius = 3.3
     wheel_distance = 16
     threshold = 0.5 # Size of a unit length in map. Also, this determines the size of the matrix_map
-    step_size = 1#float(input(f'Enter the step size of the robot (in seconds): '))
+    step_size = 5#float(input(f'Enter the step size of the robot (in seconds): '))
     rpm1, rpm2 = 50,100#map(int, input("Enter the 2 sets of wheel rpms separated by a space: ").split())
 
     # matrix_map is a matrix of obstacle region and free space
@@ -416,7 +360,7 @@ def runner():
 
     initial_orientation = 0#int(input('Enter the starting orientation of the robot (in deg): ')) * np.pi / 180
 
-    final_x, final_y = 200,20#map(int,input("Enter the final x and y position in cm separated by a space: ").split())
+    final_x, final_y = 200,120#map(int,input("Enter the final x and y position in cm separated by a space: ").split())
     final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
     while (matrix_map[final_x_mat, final_y_mat] < 0):
