@@ -332,7 +332,7 @@ def world_to_matrix(x, y, t): # Unlike in part02, this function doesn't translat
     x_mat = round(x / t)
     y_mat = round(y / t)
 
-    return x_mat, y_mat
+    return int(x_mat), int(y_mat)
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
