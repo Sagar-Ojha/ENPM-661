@@ -1,6 +1,21 @@
 <launch>
-    <arg name = "x" default = "0"/>
-    <arg name = "y" default = "0"/>
-    <arg name = "clearance" default = "20"/>
-    <node name = "optimal_path_finder" pkg = "enpm661_project3" type = "proj3p2_Sagar_Fnu.py" output = "screen" args = "$(arg x) $(arg y) $(arg clearance)" />
+    <!--Provide data in SI units-->
+    <arg name = "x" default = "0" />
+    <arg name = "y" default = "0" />
+    <arg name = "angle" default = "1.57" />
+    <arg name = "clearance" default = "0.020" />
+
+    <!--using the launch file in gazebo_ros to load map.world-->
+    <include file = "$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name = "world_name" default = "$(find enpm661_project3)/world/map.world" />
+        <arg name = "use_sim_time" value = "true" />
+    </include>
+
+    <!--spawning Turtlebot3 onto the scene-->
+    <arg name="model" default="$(env TURTLEBOT3_MODEL)" />
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x) -y $(arg y) -Y $(arg angle) -param robot_description" />
+
+    <!--A* runner-->
+    <node name = "optimal_path_finder" pkg = "enpm661_project3" type = "proj3p2_Sagar_Fnu.py" output = "screen" args = "$(arg x) $(arg y) $(arg angle) $(arg clearance)" />
 </launch>

@@ -11,40 +11,7 @@ import sys
 
 import heapq as hq
 import numpy as np
-import matplotlib.pyplot as plt
 import cv2
-
-#--------------------------------------------------------------------------------------------------
-def test_plot(matrix_map, threshold, x, y): #TODO: remove afterwards...This is just for quick validations
-    # matrix_map is not equivalent to physical map
-    # convert the indices in matrix to physical coordinates by multiplying by the threshold amount
-    t = threshold
-    ob_x = []
-    ob_y = []
-    cl_x = []
-    cl_y = []
-    bl_x = []
-    bl_y = []
-    for i in range(len(matrix_map)):
-        for j in range(len(matrix_map[i])):
-            if matrix_map[i][j] == -1:
-                bl_x.append(i*t)
-                bl_y.append(j*t)
-            if matrix_map[i][j] == -2:
-                cl_x.append(i*t)
-                cl_y.append(j*t)
-            if matrix_map[i][j] == -3:
-                ob_x.append(i*t)
-                ob_y.append(j*t)
-    
-    plt.xlim([0,600])
-    plt.ylim([0,200])
-    plt.scatter(ob_x, ob_y, s = 1, color = 'red')
-    plt.scatter(cl_x, cl_y, s = 1, color = 'green')
-    plt.scatter(bl_x, bl_y, s = 1, color = 'black')
-    plt.plot([200,x],[50,y], color = 'purple')
-    plt.show()
-#--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
 def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
@@ -351,9 +318,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
             start_2 = time.process_time()
             sequence_of_velocity = generate_optimal_action(visited_list)
             print(f'Velocity actions found in {time.process_time()-start_2} seconds.')
-            # for i in sequence_of_velocity: #TODO: remove later
-            #     print(i[0][0])
-            print(len(optimal_path), len(sequence_of_velocity))
+
             return sequence_of_velocity
 
     return
@@ -414,7 +379,7 @@ def world_to_matrix(x, y, t):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def runner(initial_x, initial_y, clearance):
+def runner(initial_x, initial_y, initial_orientation, clearance):
     # TurtleBot3 Burger dimensions are 13.8 x 17.8 x 19.2 cm^3 with an outer radius of 10.5 cm
     # The wheel radius is 3.3 cm and distance between wheels is 16 cm approximately
     clearance = clearance / 10 # Converting to cm for internal calculations
@@ -432,9 +397,7 @@ def runner(initial_x, initial_y, clearance):
         print("The values are either in obstacle space or out of bound. Try again!")
         return
 
-    initial_orientation = int(input('Enter the starting orientation of the robot (in deg): ')) * np.pi / 180
-
-    final_x, final_y = 20,50#map(int,input("Enter the final x and y position in cm separated by a space: ").split())
+    final_x, final_y = map(int,input("Enter the final x and y position in cm separated by a space: ").split())
     final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
     while (matrix_map[final_x_mat, final_y_mat] < 0):
@@ -442,8 +405,7 @@ def runner(initial_x, initial_y, clearance):
         final_x, final_y = map(int,input("Enter the final x and y position in cm separated by a space: ").split())
         final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
-    rpm1, rpm2 = 50,100#map(int, input("Enter the 2 sets of wheel rpms separated by a space: ").split())
-    # test_plot(matrix_map, threshold, initial_x_mat, initial_y_mat)
+    rpm1, rpm2 = map(int, input("Enter the 2 sets of wheel rpms separated by a space: ").split())
     velocity_data = run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, threshold,\
                                matrix_map, wheel_radius, wheel_distance, rpm1, rpm2, step_size)
     return velocity_data
@@ -455,34 +417,35 @@ def main():
     msg=Twist()
     pub=rospy.Publisher('/cmd_vel',Twist,queue_size=10)
     rospy.init_node('optimal_path_finder',anonymous=True)
+    rate = rospy.Rate(1)
 
+    time.sleep(5)
     print('\n')
     rospy.loginfo_once("A* Implementation on TurtleBot3")
     print(f'-----------------------------------------------------------')
     terminal_input = rospy.myargv(argv=sys.argv)
 
-    if (len(terminal_input) <= 4):
-        initial_x = int(sys.argv[1])
-        initial_y = int(sys.argv[2])
-        clearance = int(sys.argv[3])
-        velocity_data = runner(initial_x, initial_y, clearance)
-
+    if (len(terminal_input) <= 5):
+        initial_x = float(sys.argv[1]) * 100
+        initial_y = float(sys.argv[2]) * 100
+        initial_angle = float(sys.argv[3]) / np.pi
+        clearance = float(sys.argv[4]) * 1000
+        velocity_data = runner(initial_x, initial_y, initial_angle, clearance)
+        if velocity_data == None:
+            print(f'Try again.')
+            return
         while ((not rospy.is_shutdown()) and (i < len(velocity_data))):
-            start_time = rospy.Time.now()
-            # print(start_time)
-            # print(rospy.Time.now())
-            msg.linear.x = velocity_data[i][0][0]
-            # print(msg.linear.x)
-            msg.angular.z = velocity_data[i][0][1]
-            # print(msg.angular.z)
-            while (rospy.Time.now() <= start_time + rospy.Duration(velocity_data[i][1])):
-                pub.publish(msg)
+            msg.linear.x = float(velocity_data[i][0][0])
+            msg.angular.z = float(velocity_data[i][0][1])
+            pub.publish(msg)
+            rate.sleep()
             i += 1
         msg.linear.x = 0
         msg.angular.z = 0
         pub.publish(msg)
     else:
-        print(f'Relaunch and provide 4 input parameters.')
+        print(f'Relaunch and provide at most 4 input parameters.')
+    print('\n')
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
