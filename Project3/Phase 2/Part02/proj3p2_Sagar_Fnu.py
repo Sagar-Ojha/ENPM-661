@@ -59,7 +59,6 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
     display_canvas = np.zeros((201, 601, 3), np.uint8)
     
     #node = [node_total_cost, node_ctc, node_ctg, node_parent, node_state, intermediate_states]
-    #node_state = (initial_x, initial_y, initial_orientation)
 
     for i in range(len(matrix_map)):
         for j in range(len(matrix_map[i])):
@@ -121,35 +120,32 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def test_plot(matrix_map, threshold, x, y): #TODO: remove afterwards...This is just for quick validations
-    # matrix_map is not equivalent to physical map
-    # convert the indices in matrix to physical coordinates by multiplying by the threshold amount
-    t = threshold
-    ob_x = []
-    ob_y = []
-    cl_x = []
-    cl_y = []
-    bl_x = []
-    bl_y = []
-    for i in range(len(matrix_map)):
-        for j in range(len(matrix_map[i])):
-            if matrix_map[i][j] == -1:
-                bl_x.append(i*t)
-                bl_y.append(j*t)
-            if matrix_map[i][j] == -2:
-                cl_x.append(i*t)
-                cl_y.append(j*t)
-            if matrix_map[i][j] == -3:
-                ob_x.append(i*t)
-                ob_y.append(j*t)
-    
-    plt.xlim([0,600])
-    plt.ylim([0,200])
-    plt.scatter(ob_x, ob_y, s = 1, color = 'red')
-    plt.scatter(cl_x, cl_y, s = 1, color = 'green')
-    plt.scatter(bl_x, bl_y, s = 1, color = 'black')
-    plt.plot([200,x*t],[50,y*t], color = 'purple')
-    plt.show()
+def generate_optimal_action(visited_list):
+    """! Backtracking algorithm that finds the optimal action set.
+    @param visited_list The array of nodes that are explored
+    @return Array of set of linear and angular velocities and the time period of the velocities
+    such that the robot travels in the optimal path
+    """
+    node = visited_list[-1]
+    node_state = node[4]
+    parent_to_child_velocity = node[6]
+    lin_vel = (parent_to_child_velocity[0]**2 + parent_to_child_velocity[1]**2)**(0.5)
+    ang_vel = parent_to_child_velocity[2]
+    action_time = node[7]
+    optimal_action = [[(lin_vel, ang_vel), action_time]]
+    while (node_state != (visited_list[0][4])):
+        parent_node = node[3]
+        for i in visited_list:
+            if (i[4] == parent_node):
+                node = i
+        node_state = node[4]
+        parent_to_child_velocity = node[6]
+        lin_vel = (parent_to_child_velocity[0] ** 2 + parent_to_child_velocity[1] ** 2) ** (0.5)
+        ang_vel = parent_to_child_velocity[2]
+        action_time = node[7]
+        optimal_action.insert(0,[(lin_vel, ang_vel), action_time])
+
+    return optimal_action
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
@@ -159,14 +155,14 @@ def generate_path(visited_list):
     @return The array of coordinates of the optimal path starting from the start to the goal
     """
     node = visited_list[-1]
-    node_state = node[-2]
+    node_state = node[4]
     optimal_path = [node_state]
-    while (node_state != (visited_list[0][-2])):
-        parent_node = node[-3]
+    while (node_state != (visited_list[0][4])):
+        parent_node = node[3]
         for i in visited_list:
-            if (i[-2] == parent_node):
+            if (i[4] == parent_node):
                 node = i
-        node_state = node[-2]
+        node_state = node[4]
         optimal_path.insert(0,node_state)
 
     return optimal_path
@@ -253,8 +249,14 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
     x_mat, y_mat = world_to_matrix(child_state[0], child_state[1], threshold)
     flag = duplicate_node_check(x_mat, y_mat, matrix_map, child_ctc)
 
+    x_dot = ((wheel_radius / 2) * (rpm1 + rpm2) * np.cos(θ_prev) / (100 * 60))
+    y_dot = ((wheel_radius / 2) * (rpm1 + rpm2) * np.sin(θ_prev) / (100 * 60))
+    θ_dot = ((wheel_radius / wheel_distance) * (rpm2 - rpm1) * (2 * np.pi / 60))
+    velocities = [x_dot, y_dot, θ_dot]
+
     if flag == "New node":
-        child_node = [child_total_cost, child_ctc, child_ctg, parent_state, child_state, intermediate_steps]
+        child_node = [child_total_cost, child_ctc, child_ctg, parent_state, child_state,\
+                      intermediate_steps, velocities, t]
         hq.heappush(unvisited_list, child_node)
     elif flag == "CTC is changed":
         for i in range(len(unvisited_list)):
@@ -264,6 +266,8 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
                 unvisited_list[i][2] = child_ctg
                 unvisited_list[i][3] = parent_state
                 unvisited_list[i][5] = intermediate_steps
+                unvisited_list[i][6] = velocities
+                unvisited_list[i][7] = t
 
     return
 #--------------------------------------------------------------------------------------------------
@@ -295,16 +299,20 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
         print(f'The start and the end points are the same. Rerun the code with different values.')
         return
     # Each node has its state i.e. coordinates and orientaion, cost-to-come, cost-to-go, total-cost,
-    # parent node state and the intermediate coordinates to reach the state
+    # parent node state, the intermediate coordinates to reach the state, the velocities from the
+    # parent that led to that state, and the total time the velocity commands were carried out.
     node_state = (initial_x, initial_y, initial_orientation)
     node_ctc = 0
     node_ctg = eucledian_distance(node_state[0], node_state[1], final_x, final_y)
     node_total_cost = node_ctc + node_ctg
-    node_parent = (-1000, -1000, 0) # Just for the parent of the start node
+    node_parent = (-1000, -1000, 0) # Just for the parent of the first node
     intermediate_states = [(0,0)]
+    parent_to_child_velocity = [0,0,0] # Just for the first node
+    velocity_time = 0 # Just for the first node
 
     # unvisited_list stores the node that is to be explored
-    node = [node_total_cost, node_ctc, node_ctg, node_parent, node_state, intermediate_states]
+    node = [node_total_cost, node_ctc, node_ctg, node_parent, node_state, intermediate_states,\
+            parent_to_child_velocity, velocity_time]
     unvisited_list = []
     hq.heappush(unvisited_list, node)
     # visited_list stores the nodes that are explored
@@ -336,6 +344,12 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
             optimal_path = generate_path(visited_list)
             print(f'Optimal path found in {time.process_time()-start} seconds.')
             # animate_A_star(matrix_map, threshold, optimal_path, parent_dict)
+            start_2 = time.process_time()
+            sequence_of_velocity = generate_optimal_action(visited_list)
+            print(f'Velocity actions found in {time.process_time()-start_2} seconds.')
+            # for i in sequence_of_velocity: #TODO: remove later
+            #     print(i)
+            return sequence_of_velocity
 
     return
 #--------------------------------------------------------------------------------------------------
@@ -402,7 +416,7 @@ def runner():
     robot_radius = 10.5
     wheel_radius = 3.3
     wheel_distance = 16
-    threshold = 5# Size of a unit length in map. Thus, this determines the size of the matrix_map
+    threshold = 1# Size of a unit length in map. Thus, this determines the size of the matrix_map
     step_size = 1#float(input(f'Enter the step size of the robot (in seconds): '))
 
     # matrix_map is a matrix of obstacle region and free space
