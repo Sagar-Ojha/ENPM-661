@@ -397,12 +397,16 @@ def runner(initial_x, initial_y, initial_orientation, clearance):
         print("The values are either in obstacle space or out of bound. Try again!")
         return
 
-    final_x, final_y = map(int,input("Enter the final x and y position in cm separated by a space: ").split())
+    final_x, final_y = list(map(float,input("Enter the final x and y position in m separated by a space: ").split()))
+    final_x = final_x * 100
+    final_y = final_y * 100
     final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
     while (matrix_map[final_x_mat, final_y_mat] < 0):
         print("The values are either in obstacle space or out of bound. Try again!")
-        final_x, final_y = map(int,input("Enter the final x and y position in cm separated by a space: ").split())
+        final_x, final_y = list(map(float,input("Enter the final x and y position in m separated by a space: ").split()))
+        final_x = final_x * 100
+        final_y = final_y * 100
         final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
 
     rpm1, rpm2 = map(int, input("Enter the 2 sets of wheel rpms separated by a space: ").split())
