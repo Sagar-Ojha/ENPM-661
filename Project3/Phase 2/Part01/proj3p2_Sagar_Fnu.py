@@ -51,7 +51,7 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
     cv2.destroyAllWindows()
 
     display_canvas_anim = display_canvas.copy()
-    scale_percent = 310  # percent of original size
+    scale_percent = 200  # percent of original size
     width = int(display_canvas_anim.shape[1] * scale_percent / 100)
     height = int(display_canvas_anim.shape[0] * scale_percent / 100)
     new_canvas = cv2.resize(display_canvas_anim, (width, height), interpolation=cv2.INTER_LINEAR)
