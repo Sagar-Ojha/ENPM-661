@@ -1,11 +1,16 @@
+#! /usr/bin/env python3
 """
 Description: Implementation of A* algorithm on a differential robot (TurtleBot3 Burger)
 Date: 4/07/2023
 Author: Sagar Ojha (as03050@umd.edu), Fnu Obaid Ur Rahman (obdurhmn@umd.edu)
 """
+import rospy
+from geometry_msgs.msg import Twist
+import time
+import sys
+
 import heapq as hq
 import numpy as np
-import time
 import matplotlib.pyplot as plt
 import cv2
 
@@ -57,8 +62,6 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
     cv2.setWindowProperty('Animation', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     t = threshold
     display_canvas = np.zeros((201, 601, 3), np.uint8)
-    
-    #node = [node_total_cost, node_ctc, node_ctg, node_parent, node_state, intermediate_states]
 
     for i in range(len(matrix_map)):
         for j in range(len(matrix_map[i])):
@@ -116,7 +119,7 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
 
-    cv2.waitKey(0)
+    cv2.waitKey(5000)
     cv2.destroyAllWindows()
 #--------------------------------------------------------------------------------------------------
 
@@ -344,13 +347,13 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
             start = time.process_time()
             optimal_path = generate_path(visited_list)
             print(f'Optimal path found in {time.process_time()-start} seconds.')
-            # animate_A_star(matrix_map, threshold, optimal_path, parent_dict)
+            animate_A_star(matrix_map, threshold, optimal_path, parent_dict)
             start_2 = time.process_time()
             sequence_of_velocity = generate_optimal_action(visited_list)
             print(f'Velocity actions found in {time.process_time()-start_2} seconds.')
-            animate_A_star(matrix_map, threshold, optimal_path, parent_dict)
             # for i in sequence_of_velocity: #TODO: remove later
-            #     print(i)
+            #     print(i[0][0])
+            print(len(optimal_path), len(sequence_of_velocity))
             return sequence_of_velocity
 
     return
@@ -411,10 +414,10 @@ def world_to_matrix(x, y, t):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def runner():
+def runner(initial_x, initial_y, clearance):
     # TurtleBot3 Burger dimensions are 13.8 x 17.8 x 19.2 cm^3 with an outer radius of 10.5 cm
     # The wheel radius is 3.3 cm and distance between wheels is 16 cm approximately
-    clearance = 1#int(input(f'Enter the clearance amount (mm): ')) / 10
+    clearance = clearance / 10 # Converting to cm for internal calculations
     robot_radius = 10.5
     wheel_radius = 3.3
     wheel_distance = 16
@@ -423,16 +426,13 @@ def runner():
 
     # matrix_map is a matrix of obstacle region and free space
     matrix_map = configuration_space([clearance + robot_radius, clearance, 0], threshold) # Maintain the sequence
-
-    initial_x, initial_y = 0,0#map(int,input("Enter the starting x and y position in cm separated by a space: ").split())
     initial_x_mat, initial_y_mat = world_to_matrix(initial_x, initial_y, threshold)
 
     while (matrix_map[initial_x_mat, initial_y_mat] < 0):
         print("The values are either in obstacle space or out of bound. Try again!")
-        initial_x, initial_y = map(int,input("Enter the starting x and y position in cm separated by a space: ").split())
-        initial_x_mat, initial_y_mat = world_to_matrix(initial_x, initial_y, threshold)
+        return
 
-    initial_orientation = 0#int(input('Enter the starting orientation of the robot (in deg): ')) * np.pi / 180
+    initial_orientation = int(input('Enter the starting orientation of the robot (in deg): ')) * np.pi / 180
 
     final_x, final_y = 20,50#map(int,input("Enter the final x and y position in cm separated by a space: ").split())
     final_x_mat, final_y_mat = world_to_matrix(final_x, final_y, threshold)
@@ -444,10 +444,47 @@ def runner():
 
     rpm1, rpm2 = 50,100#map(int, input("Enter the 2 sets of wheel rpms separated by a space: ").split())
     # test_plot(matrix_map, threshold, initial_x_mat, initial_y_mat)
-    run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, threshold, matrix_map,\
-               wheel_radius, wheel_distance, rpm1, rpm2, step_size)
+    velocity_data = run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, threshold,\
+                               matrix_map, wheel_radius, wheel_distance, rpm1, rpm2, step_size)
+    return velocity_data
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    runner()
+def main():
+    i = 0
+    msg=Twist()
+    pub=rospy.Publisher('/cmd_vel',Twist,queue_size=10)
+    rospy.init_node('optimal_path_finder',anonymous=True)
+
+    print('\n')
+    rospy.loginfo_once("A* Implementation on TurtleBot3")
+    print(f'-----------------------------------------------------------')
+    terminal_input = rospy.myargv(argv=sys.argv)
+
+    if (len(terminal_input) <= 4):
+        initial_x = int(sys.argv[1])
+        initial_y = int(sys.argv[2])
+        clearance = int(sys.argv[3])
+        velocity_data = runner(initial_x, initial_y, clearance)
+
+        while ((not rospy.is_shutdown()) and (i < len(velocity_data))):
+            start_time = rospy.Time.now()
+            # print(start_time)
+            # print(rospy.Time.now())
+            msg.linear.x = velocity_data[i][0][0]
+            # print(msg.linear.x)
+            msg.angular.z = velocity_data[i][0][1]
+            # print(msg.angular.z)
+            while (rospy.Time.now() <= start_time + rospy.Duration(velocity_data[i][1])):
+                pub.publish(msg)
+            i += 1
+        msg.linear.x = 0
+        msg.angular.z = 0
+        pub.publish(msg)
+    else:
+        print(f'Relaunch and provide 4 input parameters.')
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+if __name__=='__main__':
+	main()

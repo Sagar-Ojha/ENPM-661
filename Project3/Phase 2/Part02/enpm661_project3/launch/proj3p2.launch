@@ -1,0 +1,6 @@
+<launch>
+    <arg name = "x" default = "0"/>
+    <arg name = "y" default = "0"/>
+    <arg name = "clearance" default = "20"/>
+    <node name = "optimal_path_finder" pkg = "enpm661_project3" type = "proj3p2_Sagar_Fnu.py" output = "screen" args = "$(arg x) $(arg y) $(arg clearance)" />
+</launch>
