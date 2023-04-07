@@ -83,7 +83,7 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
     cv2.destroyAllWindows()
 
     display_canvas_anim = display_canvas.copy()
-    scale_percent = 310  # percent of original size
+    scale_percent = 200  # percent of original size
     width = int(display_canvas_anim.shape[1] * scale_percent / 100)
     height = int(display_canvas_anim.shape[0] * scale_percent / 100)
     new_canvas = cv2.resize(display_canvas_anim, (width, height), interpolation=cv2.INTER_LINEAR)
@@ -92,23 +92,24 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
         for child in value:
             intermediate_steps  = child[1]
             for j in range(len(intermediate_steps)-1):
-                x1 = int(intermediate_steps[j][0] * scale_percent / 100)
-                y1 = int(intermediate_steps[j][1] * scale_percent / 100)
+                x1 = int((intermediate_steps[j][0] + 50) * scale_percent / 100)
+                y1 = int((intermediate_steps[j][1] + 100) * scale_percent / 100)
                 y1 = height - y1
-                x2 = int(intermediate_steps[j+1][0] * scale_percent / 100)
-                y2 = int(intermediate_steps[j+1][1] * scale_percent / 100)
+                x2 = int((intermediate_steps[j+1][0] + 50) * scale_percent / 100)
+                y2 = int((intermediate_steps[j+1][1] + 100) * scale_percent / 100)
                 y2 = height - y2
                 cv2.line(new_canvas, (x1, y1), (x2, y2), (0, 255, 255), 1)
-        cv2.imshow('Animation', new_canvas)
+                cv2.imshow('Animation', new_canvas)
+                #time.sleep(0.5)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
     
     for i in range(len(optimal_path) - 1):
-        x1 = int(optimal_path[i][0] * scale_percent / 100)
-        y1 = int(optimal_path[i][1] * scale_percent / 100)
+        x1 = int((optimal_path[i][0] + 50) * scale_percent / 100)
+        y1 = int((optimal_path[i][1] + 100) * scale_percent / 100)
         y1 = height - y1
-        x2 = int(optimal_path[i+1][0] * scale_percent / 100)
-        y2 = int(optimal_path[i+1][1] * scale_percent / 100)
+        x2 = int((optimal_path[i+1][0] + 50) * scale_percent / 100)
+        y2 = int((optimal_path[i+1][1] + 100) * scale_percent / 100)
         y2 = height - y2
         cv2.line(new_canvas, (x1, y1), (x2, y2), (160, 32, 240), 3)
         cv2.imshow('Optimal Path', new_canvas)
@@ -347,6 +348,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
             start_2 = time.process_time()
             sequence_of_velocity = generate_optimal_action(visited_list)
             print(f'Velocity actions found in {time.process_time()-start_2} seconds.')
+            animate_A_star(matrix_map, threshold, optimal_path, parent_dict)
             # for i in sequence_of_velocity: #TODO: remove later
             #     print(i)
             return sequence_of_velocity
