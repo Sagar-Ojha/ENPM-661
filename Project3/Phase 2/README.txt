@@ -37,6 +37,14 @@ Enter the 2 sets of wheel rpms separated by a space: 50 100
 PART 02:
 ========
 Note: Download the dependencies required for turtlebot3_simulation package.
+      Add geometry_msgs and rospy to find_package in CMakeLists.txt.
+      Add the following to package manifest, i.e., package.xml.
+	<build_depend>geometry_msgs</build_depend>
+	<build_depend>rospy</build_depend>
+	<build_export_depend>geometry_msgs</build_export_depend>
+	<build_export_depend>rospy</build_export_depend>
+	<exec_depend>geometry_msgs</exec_depend>
+	<exec_depend>rospy</exec_depend>
 
 After copying/cloning the enpme661_proj3 package to the src directory of the workspace,
 open up terminal in the root directory of the workspace and type: catkin_make.
