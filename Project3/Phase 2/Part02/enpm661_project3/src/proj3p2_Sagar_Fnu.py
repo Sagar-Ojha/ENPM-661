@@ -171,7 +171,7 @@ def duplicate_node_check(x_mat, y_mat, matrix_map, child_ctc):
 
 #--------------------------------------------------------------------------------------------------
 def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, step_size,\
-                  threshold, final_x, final_y, wheel_radius, wheel_distance, parent_dict):#TODO: Debug
+                  threshold, final_x, final_y, wheel_radius, wheel_distance, parent_dict):
     """! Generates a new node after performing the action
     @param parent_ctc The parent node state cost to come
     @param parent_state The parent node state (x, y, θ)
@@ -222,7 +222,7 @@ def generate_node(parent_ctc, parent_state, unvisited_list, matrix_map, action, 
 
     x_dot = ((wheel_radius / 2) * (rpm1 + rpm2) * np.cos(θ_prev) / (100 * 60))
     y_dot = ((wheel_radius / 2) * (rpm1 + rpm2) * np.sin(θ_prev) / (100 * 60))
-    θ_dot = ((wheel_radius / wheel_distance) * (rpm2 - rpm1) * (2 * np.pi / 60))
+    θ_dot = ((wheel_radius / wheel_distance) * (rpm2 - rpm1) / 60)
     velocities = [x_dot, y_dot, θ_dot]
 
     if flag == "New node":
@@ -416,7 +416,7 @@ def runner(initial_x, initial_y, initial_orientation, clearance):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def main():
+def main(): #TODO: Incorporate velocity_time information as well to publish onto cmd_vel
     i = 0
     msg=Twist()
     pub=rospy.Publisher('/cmd_vel',Twist,queue_size=10)
@@ -432,12 +432,14 @@ def main():
     if (len(terminal_input) <= 5):
         initial_x = float(sys.argv[1]) * 100
         initial_y = float(sys.argv[2]) * 100
-        initial_angle = float(sys.argv[3]) / np.pi
+        initial_angle = float(sys.argv[3])
         clearance = float(sys.argv[4]) * 1000
         velocity_data = runner(initial_x, initial_y, initial_angle, clearance)
+
         if velocity_data == None:
             print(f'Try again.')
             return
+
         while ((not rospy.is_shutdown()) and (i < len(velocity_data))):
             msg.linear.x = float(velocity_data[i][0][0])
             msg.angular.z = float(velocity_data[i][0][1])
