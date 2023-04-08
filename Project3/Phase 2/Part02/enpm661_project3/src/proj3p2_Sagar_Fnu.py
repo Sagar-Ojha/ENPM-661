@@ -69,8 +69,8 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
                 y2 = int((intermediate_steps[j+1][1] + 100) * scale_percent / 100)
                 y2 = height - y2
                 cv2.line(new_canvas, (x1, y1), (x2, y2), (0, 255, 255), 1)
-                cv2.imshow('Animation', new_canvas)
-                #time.sleep(0.5)
+        cv2.imshow('Animation', new_canvas)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
     
@@ -293,7 +293,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
     # action_set stores the allowed actions that can be performed on the node_state
     action_set = [[0,rpm1],[rpm1,0],[rpm1,rpm1],[0,rpm2],[rpm2,0],[rpm2,rpm2],[rpm1,rpm2],[rpm2,rpm1]]
 
-    if (node_ctg <= 1.5):
+    if (node_ctg <= 15):
         print(f'Goal reached. Rerun and try different values.')
         return
     else: goal_reached = "no"
@@ -302,7 +302,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
         current_node = hq.heappop(unvisited_list) # Node that has lowest total-cost is being explored
         visited_list.append(current_node)
 
-        if (current_node[2] <= 1.5):
+        if (current_node[2] <= 15):
             goal_reached = "yes"
 
         if goal_reached != "yes":
@@ -421,7 +421,7 @@ def main(): #TODO: Incorporate velocity_time information as well to publish onto
     msg=Twist()
     pub=rospy.Publisher('/cmd_vel',Twist,queue_size=10)
     rospy.init_node('optimal_path_finder',anonymous=True)
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(0.9)
 
     time.sleep(5)
     print('\n')
