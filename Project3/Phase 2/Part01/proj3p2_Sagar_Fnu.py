@@ -17,6 +17,7 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
     @param parent_dict Dictionary of parent node (key) and its children nodes (value)
     """
     # Create a named window with the WINDOW_NORMAL flag
+    
     cv2.namedWindow('Animation', cv2.WINDOW_NORMAL)
 
     # Set the window to be resizable and maximize it
@@ -55,6 +56,8 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
     width = int(display_canvas_anim.shape[1] * scale_percent / 100)
     height = int(display_canvas_anim.shape[0] * scale_percent / 100)
     new_canvas = cv2.resize(display_canvas_anim, (width, height), interpolation=cv2.INTER_LINEAR)
+    explore = cv2.VideoWriter('Astar.avi', cv2.VideoWriter_fourcc(*'XVID'), 50, (width, height))
+    optimal = cv2.VideoWriter('Optimal.avi', cv2.VideoWriter_fourcc(*'XVID'), 15, (width, height))
 
     for key, value in parent_dict.items():
         for child in value:
@@ -68,6 +71,7 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
                 y2 = height - y2
                 cv2.line(new_canvas, (x1, y1), (x2, y2), (0, 255, 255), 1)
         cv2.imshow('Animation', new_canvas)
+        explore.write(new_canvas)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
     
@@ -80,9 +84,12 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
         y2 = height - y2
         cv2.line(new_canvas, (x1, y1), (x2, y2), (160, 32, 240), 3)
         cv2.imshow('Optimal Path', new_canvas)
+        optimal.write(new_canvas)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Exit if 'q' is pressed
             break
 
+    explore.release()
+    optimal.release()
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 #--------------------------------------------------------------------------------------------------
