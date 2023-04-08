@@ -249,7 +249,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
     # action_set stores the allowed actions that can be performed on the node_state
     action_set = [[0,rpm1],[rpm1,0],[rpm1,rpm1],[0,rpm2],[rpm2,0],[rpm2,rpm2],[rpm1,rpm2],[rpm2,rpm1]]
 
-    if (node_ctg <= 1.5):
+    if (node_ctg <= 10):
         print(f'Goal reached. Rerun and try different values.')
         return
     else: goal_reached = "no"
@@ -258,7 +258,7 @@ def run_A_star(initial_x, initial_y, final_x, final_y, initial_orientation, thre
         current_node = hq.heappop(unvisited_list) # Node that has lowest total-cost is being explored
         visited_list.append(current_node)
 
-        if (current_node[2] <= 1.5):
+        if (current_node[2] <= 10):
             goal_reached = "yes"
 
         if goal_reached != "yes":
