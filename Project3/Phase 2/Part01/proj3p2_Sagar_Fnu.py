@@ -56,8 +56,8 @@ def animate_A_star(matrix_map, threshold, optimal_path, parent_dict):
     width = int(display_canvas_anim.shape[1] * scale_percent / 100)
     height = int(display_canvas_anim.shape[0] * scale_percent / 100)
     new_canvas = cv2.resize(display_canvas_anim, (width, height), interpolation=cv2.INTER_LINEAR)
-    explore = cv2.VideoWriter('Astar.avi', cv2.VideoWriter_fourcc(*'XVID'), 50, (width, height))
-    optimal = cv2.VideoWriter('Optimal.avi', cv2.VideoWriter_fourcc(*'XVID'), 15, (width, height))
+    explore = cv2.VideoWriter('./Astar.avi', cv2.VideoWriter_fourcc(*'XVID'), 50, (width, height))
+    optimal = cv2.VideoWriter('./Optimal.avi', cv2.VideoWriter_fourcc(*'XVID'), 15, (width, height))
 
     for key, value in parent_dict.items():
         for child in value:
