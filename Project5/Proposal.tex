@@ -1,7 +1,10 @@
 \documentclass[12pt]{extarticle}
 \usepackage[utf8]{inputenc}
 \usepackage{cite}
+\usepackage{float}
 \usepackage{hyperref}
+\usepackage{graphicx}
+\graphicspath{./}
 
 \title{Path Planning in Unknown Environment with Obstacles Using RRT*-SMART}
 \author{
@@ -43,6 +46,13 @@ The simulation will be performed using Gazebo and OpenCV. The primary goal will 
 %---------------------------------------------------------------------------------------------------
 \section{Method}
 \hspace{\parindent}The path planning method is sampling-based and it will be forward search using RRT*-Smart. The title of the paper that we will be implementing is ``RRT*-SMART: A Rapid Convergence Implementation of RRT*" by Nasir, J et al\cite{Jau}.
+
+The algorithm is as shown in Figure\ref{algo}.
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale = 0.5]{pseudocode}
+	\caption{The algorithm for RRT*-Smart. \cite{Iram}}\label{algo}
+\end{figure}
 
 Below are the software packages and libraries in Python that we plan to use.
 \begin{itemize}
@@ -100,7 +110,10 @@ Below are the software packages and libraries in Python that we plan to use.
 	Karaman and Frazzoli bibliography
 	
 	\bibitem{Jau}
-	\href{https://journals.sagepub.com/doi/10.5772/56718}{Nasir J, Islam F, Malik U, et al. RRT*-SMART: A Rapid Convergence Implementation of RRT*. International Journal of Advanced Robotic Systems. 2013;10(7). doi:10.5772/56718}
+	\href{https://journals.sagepub.com/doi/10.5772/56718}{Nasir J, Islam F, Malik U, et al. ``RRT*-SMART: A Rapid Convergence Implementation of RRT*". International Journal of Advanced Robotic Systems. 2013;10(7). doi:10.5772/56718}
+	
+	\bibitem{Iram}
+	\href{http://paper.ijcsns.org/07_book/201610/20161004.pdf}{Noreen I, et al. ``A Comparison of RRT, RRT* and RRT* -Smart Path Planning Algorithms". IJCSNS}
 \end{thebibliography}
 
 \end{document}
