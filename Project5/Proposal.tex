@@ -25,7 +25,7 @@
 
 Path planning is a crucial task in robotics and automation, and several methods have been suggested to address this issue. One of the most popular methods for resolving path planning issues is the Rapidly Exploring Random Tree (RRT) algorithm, which LaValle and Kuffner \cite{La} initially presented in 1998. RRT is a probabilistic technique that builds a tree of viable robot configuration options. It is a widely used algorithm for path planning in robotics. The algorithm builds a tree of feasible paths in the configuration space of a robot from a randomly sampled nodes. The new nodes are added to the tree by selecting a nearby node and extending the tree towards a randomly sampled configuration. This process is repeated until a feasible path from the initial configuration to the goal configuration is found. The method has been extended and modified by a number of researchers to enhance the performance of RRT. One such modification is RRT-Connect method, which was put forth by Karaman and Frazzoli in 2000. This version constructs two trees from the beginning and goal configurations and links them to produce a path.
 
-The produced pathways may not be optimal, nevertheless, because of the original RRT method. In 2010, Karaman and Frazzoli \cite{Kar} devised the RRT* method to overcome the optimality problem. In order to increase the number of optimum pathways, RRT* builds a more balanced tree and rewires the tree structure. The algorithm achieves convergence towards the best solution, assuring asymptotic optimality as well as probabilistic completeness. Yet, it has been demonstrated that it is time consuming and has a slow convergence rate especially when there are complicated obstacles.
+The produced pathways may not be optimal, nevertheless, because of the original RRT method. In 2010, Karaman and Frazzoli devised the RRT* method to overcome the optimality problem. In order to increase the number of optimum pathways, RRT* builds a more balanced tree and rewires the tree structure. The algorithm achieves convergence towards the best solution, assuring asymptotic optimality as well as probabilistic completeness. Yet, it has been demonstrated that it is time consuming and has a slow convergence rate especially when there are complicated obstacles.
 
 As a result, RRT*-Smart was proposed to address limitations of RRT*. It was introduced by Jauwairia Nasir et al. in 2013 \cite{Jau}. The algorithm uses heuristic information to direct sampling toward the objective region. Thus, it accelerates the rate of convergence in order to arrive at an optimal or near-optimal solution considerably faster, thereby lowering execution time. The algorithm's innovative method takes use of two new approaches  in addition to RRT*, path optimization and intelligent sampling, which we will be implementing as our final project. 
 
@@ -104,11 +104,8 @@ Below are the software packages and libraries in Python that we plan to use.
 %---------------------------------------------------------------------------------------------------
 \begin{thebibliography}{9}
 	\bibitem{La}
-	LaVelle and Kuffner bibliography
+	\href{http://lavalle.pl/papers/Lav98c.pdf}{LaVelle S, et al. ``Rapidly-Exploring Random Trees : A New Tool for Path Planning.”}
 
-	\bibitem{Kar}
-	Karaman and Frazzoli bibliography
-	
 	\bibitem{Jau}
 	\href{https://journals.sagepub.com/doi/10.5772/56718}{Nasir J, Islam F, Malik U, et al. ``RRT*-SMART: A Rapid Convergence Implementation of RRT*". International Journal of Advanced Robotic Systems. 2013;10(7). doi:10.5772/56718}
 	
