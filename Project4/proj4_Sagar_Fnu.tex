@@ -1,0 +1,35 @@
+\documentclass[12pt]{extarticle}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+\usepackage{float}
+\usepackage{hyperref}
+
+\title{Project 4: Pick and Place Using Panda Manipulator Arm and Moveit}
+\author{
+	Sagar Ojha \\
+	\texttt{as03050@umd.edu}\\
+	\textit{UID: N/A (Guest Student)}
+	\and
+	Obaid Ur Rahman\\
+	\texttt{obdurhmn@umd.edu}\\
+	\textit{UID: 119451762}}
+\date{\today}
+
+\begin{document}
+\maketitle
+\newpage
+%---------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------
+\section{\href{https://drive.google.com/drive/folders/1XAnNGtXujIGtYj0lQiueG0jQ_fdg93Ix?usp=sharing}{Google Drive Link}}
+\hspace{\parindent} https://drive.google.com/drive/folders/1XAnNGtXujIGtYj0lQiueG0jQ
+\_fdg93Ix?usp=sharing
+
+Contains several screen recordings with different initial pose(position \& orientation) of the manipulator. For each configuration, the recordings show the planned path with the trail feature on and off.
+
+\section{Contributions}
+\subsection{Sagar}
+\hspace{\parindent} Modified the \href{https://github.com/ros-planning/moveit_tutorials/blob/master/doc/pick_place/src/pick_place_tutorial.cpp}{original code} provided with \href{https://ros-planning.github.io/moveit_tutorials/doc/getting_started/getting_started.html}{moveit\_tutorials} package to meet the project requirements. The modified code is available in \href{https://github.com/Sagar-Ojha/ENPM-661/tree/main/Project4}{this} github repo.
+
+\subsection{Obaid}
+\hspace{\parindent} \href{https://drive.google.com/drive/folders/1XAnNGtXujIGtYj0lQiueG0jQ_fdg93Ix?usp=sharing}{Screen recordings} of the simulation of Panda manipulator in RViz from several camera angles with the trail feature on and off. Various initial pose of the arm are selected. The arm has a set pre-pick pose and post-place pose which can be changed from \href{https://github.com/Sagar-Ojha/ENPM-661/tree/main/Project4}{\textbf{pick\_place\_tutorial.cpp}}. Likewise, the pose of any object can be changed from the source code file as well. The manipulator picks up the object from one side of the table and goes around the obstacle to place the object on the other side of the table.
+\end{document}
