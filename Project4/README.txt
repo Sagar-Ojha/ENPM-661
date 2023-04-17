@@ -1,5 +1,5 @@
 Team members: Sagar Ojha, Guest Student
-	   		      Obaid ur Rahman, 119451762
+	      Obaid ur Rahman, 119451762
 Note: The authors of the original code are Ioan Sucan and Ridhwan Luthra.
 
 GitHub Repo link: https://github.com/Sagar-Ojha/ENPM-661/tree/main/Project4
