@@ -37,6 +37,7 @@ def animate_RRT_star_Smart(entire_region, t):
     plt.show()
 #--------------------------------------------------------------------------------------------------
 
+#--------------------------------------------------------------------------------------------------
 def animate_sample_point(visited_nodes, entire_region):
     canvas = np.zeros((203,203, 3), dtype=np.uint8)
     display_canvas_anim = canvas.copy()
