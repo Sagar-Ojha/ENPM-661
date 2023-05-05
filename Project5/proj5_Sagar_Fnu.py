@@ -20,6 +20,7 @@ def animate_RRT_star_Smart(entire_region, t):
     y_obs = []
     x_outer = []
     y_outer = []
+    
     for x in range(len(entire_region)):
         for y in range(len(entire_region[x])):
             if entire_region[x][y] == -1:
@@ -34,6 +35,37 @@ def animate_RRT_star_Smart(entire_region, t):
     plt.scatter(x_obs, y_obs, marker = "s", s = 0.35, c = 'red')
     plt.scatter(x_outer, y_outer, marker = "s", s = 0.35, c = 'black')
     plt.show()
+#--------------------------------------------------------------------------------------------------
+
+def animate_sample_point(visited_nodes, entire_region):
+    canvas = np.zeros((203,203, 3), dtype=np.uint8)
+    display_canvas_anim = canvas.copy()
+    scale_percent = 600  # percent of original size
+    width = int(display_canvas_anim.shape[1] * scale_percent / 100)
+    height = int(display_canvas_anim.shape[0] * scale_percent / 100)
+    canvas = cv2.resize(display_canvas_anim, (width, height), interpolation=cv2.INTER_LINEAR)
+    
+    for x in range(len(entire_region)):
+        for y in range(len(entire_region[x])):
+            if entire_region[x][y] == -1:
+                # Draw a red circle at the obstacle location
+                cv2.circle(canvas, (int(x * scale_percent / 100), int(height - (y* scale_percent / 100))), 4, (0, 0, 255), -1)
+            elif entire_region[x][y] == -2:
+                # Draw a black circle at the outer boundary location
+                cv2.circle(canvas, (int(x * scale_percent / 100), int(height - (y* scale_percent / 100))), 4, (255, 0, 255), -1)
+
+    for i in range(len(visited_nodes)):
+        x = visited_nodes[i][0]
+        y = visited_nodes[i][1]
+        cv2.circle(canvas, (int(x * scale_percent / 100), int(height - (y* scale_percent / 100))), radius=4, color=(255, 0, 0), thickness=-1)
+        # Display the canvas
+        cv2.imshow('Canvas', canvas)
+        cv2.waitKey(200)
+        #time.sleep(0.1)
+
+    cv2.imshow('Canvas', canvas)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
