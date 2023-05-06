@@ -20,20 +20,26 @@ def animate_RRT_star_Smart(entire_region, t):
     y_obs = []
     x_outer = []
     y_outer = []
+    x_exp = [] # Explored nodes
+    y_exp = []
     
     for x in range(len(entire_region)):
         for y in range(len(entire_region[x])):
-            if entire_region[x][y] == -1:
+            if entire_region[x][y][2] == -1:
                 x_obs.append(x*t)
                 y_obs.append(y*t)
-            elif entire_region[x][y] == -2:
+            elif entire_region[x][y][2] == -2:
                 x_outer.append(x*t)
                 y_outer.append(y*t)
+            elif entire_region[x][y][2] > 0:
+                x_exp.append(x*t)
+                y_exp.append(y*t)
 
     plt.xlim([0,int(100)])
     plt.ylim([0,int(100)])
     plt.scatter(x_obs, y_obs, marker = "s", s = 0.35, c = 'red')
     plt.scatter(x_outer, y_outer, marker = "s", s = 0.35, c = 'black')
+    plt.scatter(x_exp, y_exp, marker = "s", s = 0.35, c = 'blue')
     plt.show()
 #--------------------------------------------------------------------------------------------------
 
@@ -70,11 +76,113 @@ def animate_sample_point(visited_nodes, entire_region):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
+def chosen_parent(z_near, z_nearest, z_new, entire_region, t):
+    """! Returns the lowest cost-to-come node as the parent for z_new """
+    parent_node = z_nearest
+    mat_x_parent, mat_y_parent = matrix_indices(z_nearest, t)
+    cost_to_come = entire_region[mat_x_parent][mat_y_parent][2] +\
+                            eucledian_distance(z_nearest[0], z_nearest[1], z_new[0], z_new[1])
+    for possible_parent in z_near:
+        mat_x_parent, mat_y_parent = matrix_indices(z_nearest, t)
+        cost_to_come_current = entire_region[mat_x_parent][mat_y_parent][2] +\
+          eucledian_distance(possible_parent[0], possible_parent[1], z_new[0], z_new[1])
+        if (cost_to_come_current < cost_to_come):
+            parent_node = possible_parent
+            cost_to_come = cost_to_come_current
+
+    return parent_node, cost_to_come
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+def near(entire_region, t, z_new, search_radius):
+    """! Returns an array of the nodes that fall within the search_radius of z_new node"""
+    z_near = []
+    for i in range(z_new[0] - search_radius, z_new[0] + (search_radius + 1)):
+        if ((i > 0) and (i < 100)):
+            for j in range(z_new[1] - search_radius, z_new[1] + (search_radius + 1)):
+                if ((j > 0) and (j < 100)):
+                    node = np.array([i, j])
+                    mat_x, mat_y = matrix_indices(node, t)
+                    if ((entire_region[mat_x][mat_y][2] > 0) and not np.all([node, z_new])):
+                        z_near.append(node)
+    return z_near
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+def obstacle_free(coordinate, entire_region, t):
+    """! Checks if z_new is in obstacle region or not """
+    mat_x, mat_y = matrix_indices(coordinate, t)
+    if entire_region[mat_x][mat_y][2] < 0:
+        return False
+    else: return True
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+def eucledian_distance(x1, y1, x2, y2):
+    """! Calculates the distance between two points """
+    distance = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
+    return distance
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+def steer(z_nearest, z_rand):
+    """! Finds the new node between z_nearest and z_rand after performing action on z_nearest """
+    action_step_size = 5
+    if (eucledian_distance(z_nearest[0], z_nearest[1], z_rand[0], z_rand[1]) > 5):
+        # Angle between the horizontal and the vector connecting z_nearest to z_rand
+        angle_with_horizontal = np.arctan2((z_rand[1] - z_nearest[1]), (z_rand[0] - z_nearest[0]))
+        x_new = z_nearest[0] + action_step_size * np.cos(angle_with_horizontal)
+        y_new = z_nearest[1] + action_step_size * np.sin(angle_with_horizontal)
+        z_new = np.array([int(x_new), int(y_new)])
+    else:
+        z_new = z_rand
+    return z_new
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+def nearest(entire_region, z_rand, t):
+    """! Searches around the boundary of a square for presence of a node and returns that node
+    Ideally, we would want to search around a circle rather than a square but that has its own caveats
+    like missing a crucial node because of truncation and round off error while formulating circle"""
+    nearest_node = []
+    radius = 1
+    while len(nearest_node) == 0:
+        for i in range(z_rand[0] - radius, z_rand[0] + (radius + 1)):
+            if ((i > 0) and (i < 100)):
+                if ((z_rand[1] - radius) > 0):
+                    node_bottom = np.array([i, z_rand[1] - radius])
+                    mat_x, mat_y = matrix_indices(node_bottom, t)
+                    if (entire_region[mat_x][mat_y][2] > 0):
+                        nearest_node.append(node_bottom)
+                if ((z_rand[1] + radius) < 100):
+                    node_top = np.array([i, z_rand[1] + radius])
+                    mat_x, mat_y = matrix_indices(node_top, t)
+                    if (entire_region[mat_x][mat_y][2] > 0):
+                        nearest_node.append(node_top)
+
+        for j in range(z_rand[1] - radius + 1, z_rand[1] + radius):
+            if ((j > 0) and (j < 100)):
+                if ((z_rand[0] - radius) > 0):
+                    node_left = np.array([z_rand[0] - radius, j])
+                    mat_x, mat_y = matrix_indices(node_left, t)
+                    if (entire_region[mat_x][mat_y][2] > 0):
+                        nearest_node.append(node_left)
+                if ((z_rand[0] + radius) < 100):
+                    node_right = np.array([z_rand[0] + radius, j])
+                    mat_x, mat_y = matrix_indices(node_right, t)
+                    if (entire_region[mat_x][mat_y][2] > 0):
+                        nearest_node.append(node_right)
+        radius += 1
+
+    return nearest_node[0]
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
 def random_sampling(entire_region, t):
     """! Returns a random coordinate within 1 to 99 """
     x, y = np.random.randint(1, 99, 2)
     mat_x, mat_y = matrix_indices([x, y], t)
-    while entire_region[mat_x][mat_y] != 0:
+    while (entire_region[mat_x][mat_y]).any() != 0:
         x, y = np.random.randint(1, 99, 2)
         mat_x, mat_y = matrix_indices([x, y], t)
     
@@ -88,7 +196,7 @@ def intelligent_sampling(z_beacon, entire_region, t):
     x = np.random.randint(z_beacon[0] - biasing_radius, z_beacon[0] + biasing_radius)
     y = np.random.randint(z_beacon[1] - biasing_radius, z_beacon[1] + biasing_radius)
     mat_x, mat_y = matrix_indices([x, y], t)
-    while entire_region[mat_x][mat_y] < 0:
+    while (entire_region[mat_x][mat_y]).any() < 0:
         x = np.random.randint(z_beacon[0] - biasing_radius, z_beacon[0] + biasing_radius)
         y = np.random.randint(z_beacon[1] - biasing_radius, z_beacon[1] + biasing_radius)
         mat_x, mat_y = matrix_indices([x, y], t)
@@ -118,22 +226,41 @@ def RRT_star_smart(entire_region, t):
     z_goal = np.array([95, 85]) # Goal node
     z_beacon = z_init # Initializing the first value for z_beacon
 
-    node = [z_init, np.array([-1, -1])] # Each node consists of the state and its parent
-    # Parent state for the first node is set as [-1, -1]
+    parent_node = np.array([-1, -1]) # Parent state for the first node is set as [-1, -1]
     mat_x, mat_y = matrix_indices(z_init, t) # Get the indices in the matrix map
-    entire_region[mat_x][mat_y] = 1 # Cost-to-come values are set to the nodes that are stored in T
-    # Cost-to-come value for z_init is set to 1 (just for an easier implementation)
+
+    # Parent-node and the cost-to-come values are set stored in the 3rd dimension of the matrix map
+    # That way we don't need to maintain another data structure, specifically tree
+    entire_region[mat_x][mat_y] = np.array([parent_node[0], parent_node[1], 1])
+    # Cost-to-come for the first node is set to 1 by default
     
-    T = [node]
-    # print(z_init, mat_x, mat_y)
+    print(entire_region[mat_x][mat_y], z_init, mat_x, mat_y)
 
     for i in range(1, num_iteration+1):
         if ((iter_at_soln != num_iteration) and (((i - iter_at_soln) % biasing_ratio) == 0)):
             z_rand = intelligent_sampling(z_beacon, entire_region)
         else:
-            z_rand = random_sampling(entire_region)
+            z_rand = random_sampling(entire_region, t)
+        
+        # Getting the nearest node to z_rand
+        z_nearest = nearest(entire_region, z_rand, t)
+        # print(z_nearest)
+
+        # Setting up the new node z_new after performing the action on z_nearest
+        z_new = steer(z_nearest, z_rand) # Could get action command as well
+
+        # Check if z_new is in the obstacle region
+        if (obstacle_free(z_new, entire_region, t) == True):
+            search_radius = 10
+            z_near = near(entire_region, t, z_new, search_radius)
+            z_min, cost_to_come = chosen_parent(z_near, z_nearest, z_new, entire_region, t)
+
+            mat_x_parent, mat_y_parent = matrix_indices(z_min, t)
+            mat_x_new, mat_y_new = matrix_indices(z_new, t)
+            entire_region[mat_x_new][mat_y_new] = np.array([mat_x_parent, mat_y_parent, cost_to_come])
 
 
+    animate_RRT_star_Smart(entire_region, t)
     return
 #--------------------------------------------------------------------------------------------------
 
@@ -142,7 +269,7 @@ def configuration_space(t):
     """! Creates a matrix map of the configuration space
     @return A matrix implementing the configuration map
     """
-    entire_region = np.zeros([int(101/t),int(101/t)])
+    entire_region = np.zeros([int(101/t),int(101/t), 3])
 
     for x in range(len(entire_region)):
         for y in range(len(entire_region[x])):
@@ -166,9 +293,8 @@ def configuration_space(t):
 def runner():
     threshold = 0.25 # matrix-resolution threshold
     entire_region = configuration_space(threshold)
-    np.random.seed(1) # Seed for random sampling
+    np.random.seed(10) # Seed for random sampling
     RRT_star_smart(entire_region, threshold)
-    # animate_RRT_star_Smart(entire_region, threshold)
     return
 #--------------------------------------------------------------------------------------------------
 
