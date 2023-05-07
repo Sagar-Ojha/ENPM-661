@@ -10,7 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 #--------------------------------------------------------------------------------------------------
-def animate_RRT_star_Smart(entire_region, t):
+def animate_RRT_star_Smart(entire_region, t, optimal_path):
     """! Plots the coordinates that have been explored and the optimal path to the goal
     @param entire_region The array of coordinates of the obstacle region
     @param t Threshold for the matrix map
@@ -22,6 +22,8 @@ def animate_RRT_star_Smart(entire_region, t):
     y_outer = []
     x_exp = [] # Explored nodes
     y_exp = []
+    x_opt = []
+    y_opt = []
     
     for x in range(len(entire_region)):
         for y in range(len(entire_region[x])):
@@ -31,15 +33,21 @@ def animate_RRT_star_Smart(entire_region, t):
             elif entire_region[x][y][2] == -2:
                 x_outer.append(x*t)
                 y_outer.append(y*t)
-            elif entire_region[x][y][2] > 0:
-                x_exp.append(x*t)
-                y_exp.append(y*t)
+            elif (entire_region[x][y][2] > 1):
+                x_exp = [x*t, entire_region[x][y][0]]
+                y_exp = [y*t, entire_region[x][y][1]]
+                plt.plot(x_exp, y_exp, linewidth = '0.5', color = 'magenta')
+
+    if (len(optimal_path) != 0):
+        for node in optimal_path:
+            x_opt.append(node[0])
+            y_opt.append(node[1])
+        plt.plot(x_opt, y_opt, linewidth = '1', color = 'black')
 
     plt.xlim([0,int(100)])
     plt.ylim([0,int(100)])
     plt.scatter(x_obs, y_obs, marker = "s", s = 0.35, c = 'red')
     plt.scatter(x_outer, y_outer, marker = "s", s = 0.35, c = 'black')
-    plt.scatter(x_exp, y_exp, marker = "s", s = 0.35, c = 'blue')
     plt.show()
 #--------------------------------------------------------------------------------------------------
 
@@ -76,6 +84,44 @@ def animate_sample_point(visited_nodes, entire_region):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
+def optimal_path_RRT_star(entire_region, t, z_new):
+    """! Backtracks the optimal path for RRT* algorithm"""
+    optimal_path = [z_new]
+    cost = 0
+    while cost != 0.1: # Cost of z_init is 1
+        mat_x, mat_y = matrix_indices(z_new, t)
+        z_new = entire_region[mat_x][mat_y][0:2]
+        cost = entire_region[mat_x][mat_y][2]
+        optimal_path.insert(0, z_new)
+    optimal_path.pop(0)
+    return optimal_path
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+def initial_path_found(z_goal, z_new):
+    """! Returns True is initial distance is found """
+    error = eucledian_distance(z_goal[0], z_goal[1], z_new[0], z_new[1])
+    if error < 5:
+        return True
+    else: return False
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+def rewire(entire_region, t , z_near, z_new, z_min):
+    """! Rewires z_new as the new parent to nodes in z_near if doing so decreases the cost-to-come
+    for the nodes in z_near"""
+    mat_x_parent, mat_y_parent = matrix_indices(z_new, t)
+    parent_cost = entire_region[mat_x_parent][mat_y_parent][2]
+    for nodes in z_near:
+        if ((nodes[0] != z_min[0]) and (nodes[1] != z_min[1])): # Done to make sure tree is not cut
+            mat_x, mat_y = matrix_indices(nodes, t)
+            distance_from_z_new = eucledian_distance(z_new[0], z_new[1], nodes[0], nodes[1])
+            new_cost = parent_cost + distance_from_z_new
+            if (new_cost < entire_region[mat_x][mat_y][2]):
+                entire_region[mat_x][mat_y] = np.array([z_new[0], z_new[1], new_cost])
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
 def chosen_parent(z_near, z_nearest, z_new, entire_region, t):
     """! Returns the lowest cost-to-come node as the parent for z_new """
     parent_node = z_nearest
@@ -83,7 +129,7 @@ def chosen_parent(z_near, z_nearest, z_new, entire_region, t):
     cost_to_come = entire_region[mat_x_parent][mat_y_parent][2] +\
                             eucledian_distance(z_nearest[0], z_nearest[1], z_new[0], z_new[1])
     for possible_parent in z_near:
-        mat_x_parent, mat_y_parent = matrix_indices(z_nearest, t)
+        mat_x_parent, mat_y_parent = matrix_indices(parent_node, t)
         cost_to_come_current = entire_region[mat_x_parent][mat_y_parent][2] +\
           eucledian_distance(possible_parent[0], possible_parent[1], z_new[0], z_new[1])
         if (cost_to_come_current < cost_to_come):
@@ -101,9 +147,11 @@ def near(entire_region, t, z_new, search_radius):
         if ((i > 0) and (i < 100)):
             for j in range(z_new[1] - search_radius, z_new[1] + (search_radius + 1)):
                 if ((j > 0) and (j < 100)):
+                    # if ((i ** 2 + j ** 2) < (search_radius ** 2)):
                     node = np.array([i, j])
                     mat_x, mat_y = matrix_indices(node, t)
-                    if ((entire_region[mat_x][mat_y][2] > 0) and not np.all([node, z_new])):
+                    if ((entire_region[mat_x][mat_y][2] > 0) and (i != z_new[0])\
+                        and (j != z_new[1])):
                         z_near.append(node)
     return z_near
 #--------------------------------------------------------------------------------------------------
@@ -217,7 +265,7 @@ def RRT_star_smart(entire_region, t):
     @param t Threshold for the matrix map
     @return None
     """
-    num_iteration = 1000 # Iteration number for the search
+    num_iteration = 3000 # Iteration number for the search
     biasing_ratio = 5 # Could implement a dynamic biasing ratio (Eqn (1) in Jauwaria article)
     iter_at_soln = num_iteration # Iteration number when the initial path is found
     # By default iter_at_soln is set to num_iteration. It'll change once initial path is found
@@ -231,16 +279,17 @@ def RRT_star_smart(entire_region, t):
 
     # Parent-node and the cost-to-come values are set stored in the 3rd dimension of the matrix map
     # That way we don't need to maintain another data structure, specifically tree
-    entire_region[mat_x][mat_y] = np.array([parent_node[0], parent_node[1], 1])
-    # Cost-to-come for the first node is set to 1 by default
+    entire_region[mat_x][mat_y] = np.array([parent_node[0], parent_node[1], 0.1])
+    # Cost-to-come for the first node is set to 0.1 by default
     
     print(entire_region[mat_x][mat_y], z_init, mat_x, mat_y)
 
     for i in range(1, num_iteration+1):
-        if ((iter_at_soln != num_iteration) and (((i - iter_at_soln) % biasing_ratio) == 0)):
-            z_rand = intelligent_sampling(z_beacon, entire_region)
-        else:
-            z_rand = random_sampling(entire_region, t)
+        # if ((iter_at_soln != num_iteration) and (((i - iter_at_soln) % biasing_ratio) == 0)):
+        #     z_rand = intelligent_sampling(z_beacon, entire_region)
+        # else:
+        #     z_rand = random_sampling(entire_region, t)
+        z_rand = random_sampling(entire_region, t)
         
         # Getting the nearest node to z_rand
         z_nearest = nearest(entire_region, z_rand, t)
@@ -251,16 +300,25 @@ def RRT_star_smart(entire_region, t):
 
         # Check if z_new is in the obstacle region
         if (obstacle_free(z_new, entire_region, t) == True):
-            search_radius = 10
+            search_radius = 5 # action_step_size has to be the same as well
             z_near = near(entire_region, t, z_new, search_radius)
             z_min, cost_to_come = chosen_parent(z_near, z_nearest, z_new, entire_region, t)
 
-            mat_x_parent, mat_y_parent = matrix_indices(z_min, t)
             mat_x_new, mat_y_new = matrix_indices(z_new, t)
-            entire_region[mat_x_new][mat_y_new] = np.array([mat_x_parent, mat_y_parent, cost_to_come])
+            entire_region[mat_x_new][mat_y_new] = np.array([z_min[0], z_min[1], cost_to_come])
+            # We store the physical coordinates of the parent node rather than the parent's matrix indices
+            # Above steps are equivalent to insertnode function in the algorithm
+            # Upto here is RRT----------------------------------------------------------------
+            rewire(entire_region, t, z_near, z_new, z_min)
+            # Upto here is RRT*---------------------------------------------------------------
 
+            if (initial_path_found(z_goal, z_new) and (iter_at_soln == num_iteration)):
+                iter_at_soln = i
+                z_goal = z_new # Done just to repeat the same simulation, thus easeier to debug
 
-    animate_RRT_star_Smart(entire_region, t)
+    RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
+
+    animate_RRT_star_Smart(entire_region, t, RRT_star_optimal_path)
     return
 #--------------------------------------------------------------------------------------------------
 
