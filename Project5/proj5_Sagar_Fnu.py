@@ -84,6 +84,15 @@ def animate_sample_point(visited_nodes, entire_region):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
+def path_optimization(entire_region, t, RRT_star_optimal_path):
+    z_beacons = []
+    mat_x_final, mat_y_final = matrix_indices(RRT_star_optimal_path[-1], t)
+    direct_cost = entire_region[mat_x_final][mat_y_final][2]
+    print(direct_cost)
+    return z_beacons, direct_cost
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
 def optimal_path_RRT_star(entire_region, t, z_new):
     """! Backtracks the optimal path for RRT* algorithm"""
     optimal_path = [z_new]
@@ -113,12 +122,12 @@ def rewire(entire_region, t , z_near, z_new, z_min):
     mat_x_parent, mat_y_parent = matrix_indices(z_new, t)
     parent_cost = entire_region[mat_x_parent][mat_y_parent][2]
     for nodes in z_near:
-        if ((nodes[0] != z_min[0]) and (nodes[1] != z_min[1])): # Done to make sure tree is not cut
-            mat_x, mat_y = matrix_indices(nodes, t)
-            distance_from_z_new = eucledian_distance(z_new[0], z_new[1], nodes[0], nodes[1])
-            new_cost = parent_cost + distance_from_z_new
-            if (new_cost < entire_region[mat_x][mat_y][2]):
-                entire_region[mat_x][mat_y] = np.array([z_new[0], z_new[1], new_cost])
+        # if ((nodes[0] != z_min[0]) and (nodes[1] != z_min[1])): # Done to make sure tree is not cut
+        mat_x, mat_y = matrix_indices(nodes, t)
+        distance_from_z_new = eucledian_distance(z_new[0], z_new[1], nodes[0], nodes[1])
+        new_cost = parent_cost + distance_from_z_new
+        if (new_cost < entire_region[mat_x][mat_y][2]):
+            entire_region[mat_x][mat_y] = np.array([z_new[0], z_new[1], new_cost])
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
@@ -129,7 +138,7 @@ def chosen_parent(z_near, z_nearest, z_new, entire_region, t):
     cost_to_come = entire_region[mat_x_parent][mat_y_parent][2] +\
                             eucledian_distance(z_nearest[0], z_nearest[1], z_new[0], z_new[1])
     for possible_parent in z_near:
-        mat_x_parent, mat_y_parent = matrix_indices(parent_node, t)
+        mat_x_parent, mat_y_parent = matrix_indices(possible_parent, t)
         cost_to_come_current = entire_region[mat_x_parent][mat_y_parent][2] +\
           eucledian_distance(possible_parent[0], possible_parent[1], z_new[0], z_new[1])
         if (cost_to_come_current < cost_to_come):
@@ -238,15 +247,17 @@ def random_sampling(entire_region, t):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def intelligent_sampling(z_beacon, entire_region, t):
+def intelligent_sampling(z_beacons, entire_region, t):
     """! Returns a random coordinate near z_beacon within biasing_radius"""
     biasing_radius = 3 # Not exactly gives values within a circle but more like within a square
-    x = np.random.randint(z_beacon[0] - biasing_radius, z_beacon[0] + biasing_radius)
-    y = np.random.randint(z_beacon[1] - biasing_radius, z_beacon[1] + biasing_radius)
+    if (len(z_beacons) == 2): i = 1
+    else: i = np.random.randint(1, len(z_beacons) - 2)
+    x = np.random.randint(z_beacons[i][0] - biasing_radius, z_beacons[i][0] + biasing_radius)
+    y = np.random.randint(z_beacons[i][1] - biasing_radius, z_beacons[i][1] + biasing_radius)
     mat_x, mat_y = matrix_indices([x, y], t)
     while (entire_region[mat_x][mat_y]).any() < 0:
-        x = np.random.randint(z_beacon[0] - biasing_radius, z_beacon[0] + biasing_radius)
-        y = np.random.randint(z_beacon[1] - biasing_radius, z_beacon[1] + biasing_radius)
+        x = np.random.randint(z_beacons[i][0] - biasing_radius, z_beacons[i][0] + biasing_radius)
+        y = np.random.randint(z_beacons[i][1] - biasing_radius, z_beacons[i][1] + biasing_radius)
         mat_x, mat_y = matrix_indices([x, y], t)
     
     return np.array([x, y])
@@ -272,7 +283,9 @@ def RRT_star_smart(entire_region, t):
 
     z_init = np.array([50, 50]) # Start node
     z_goal = np.array([95, 85]) # Goal node
-    z_beacon = z_init # Initializing the first value for z_beacon
+    path_found = "no"
+    z_beacons = [z_init, z_goal] # Initializing the first value for z_beacon
+    direct_cost_old = 10 # Initializing the default value for direct_cost_old
 
     parent_node = np.array([-1, -1]) # Parent state for the first node is set as [-1, -1]
     mat_x, mat_y = matrix_indices(z_init, t) # Get the indices in the matrix map
@@ -283,10 +296,11 @@ def RRT_star_smart(entire_region, t):
     # Cost-to-come for the first node is set to 0.1 by default
     
     print(entire_region[mat_x][mat_y], z_init, mat_x, mat_y)
+    RRT_star_optimal_path = []
 
     for i in range(1, num_iteration+1):
         # if ((iter_at_soln != num_iteration) and (((i - iter_at_soln) % biasing_ratio) == 0)):
-        #     z_rand = intelligent_sampling(z_beacon, entire_region)
+        #     z_rand = intelligent_sampling(z_beacons, entire_region)
         # else:
         #     z_rand = random_sampling(entire_region, t)
         z_rand = random_sampling(entire_region, t)
@@ -300,7 +314,7 @@ def RRT_star_smart(entire_region, t):
 
         # Check if z_new is in the obstacle region
         if (obstacle_free(z_new, entire_region, t) == True):
-            search_radius = 5 # action_step_size has to be the same as well
+            search_radius = 4 # Ideally, action_step_size has to be the same as well
             z_near = near(entire_region, t, z_new, search_radius)
             z_min, cost_to_come = chosen_parent(z_near, z_nearest, z_new, entire_region, t)
 
@@ -314,10 +328,15 @@ def RRT_star_smart(entire_region, t):
 
             if (initial_path_found(z_goal, z_new) and (iter_at_soln == num_iteration)):
                 iter_at_soln = i
-                z_goal = z_new # Done just to repeat the same simulation, thus easeier to debug
-
-    RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
-
+                z_goal = z_new # Done just to repeat the same simulation, thus easier to debug
+                path_found = "yes"
+                direct_cost_old = cost_to_come
+            
+        if (path_found == "yes"):
+            RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
+            # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
+            # z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
+    print(iter_at_soln)
     animate_RRT_star_Smart(entire_region, t, RRT_star_optimal_path)
     return
 #--------------------------------------------------------------------------------------------------
