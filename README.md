@@ -12,3 +12,6 @@ Contains projects for ENPM 661 2023-SP
 
 ## Project4
     - Pick and place using Panda robotic manipulator in RViz environment.
+
+## Project5
+    - RRT*-Smart Algorithm implementation on a point robot (needs testing and optimization).
