@@ -49,7 +49,6 @@ def animate_RRT_star_Smart(entire_region, t, optimal_path, z_beacons):
         plt.plot(x_opt, y_opt, linewidth = '1', color = 'black')
     
     for beacon in z_beacons:
-        print(beacon)
         x_beacon.append(beacon[0])
         y_beacon.append(beacon[1])
     plt.plot(x_beacon, y_beacon, linewidth = '1', color = 'green')
@@ -112,13 +111,13 @@ def nodes_visible(entire_region, t, parent, child):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def path_optimization(entire_region, t, RRT_star_optimal_path):
+def path_optimization(entire_region, t, RRT_star_optimal_path, j):
     """! Returns the array that has successive beacon nodes and the direct cost """
     Z_beacons = [RRT_star_optimal_path[0]]
     # mat_x_final, mat_y_final = matrix_indices(RRT_star_optimal_path[-1], t)
     # direct_cost = entire_region[mat_x_final][mat_y_final][2]
 
-    while ((Z_beacons[-1][0] != RRT_star_optimal_path[-1][0]) and\
+    while ((Z_beacons[-1][0] != RRT_star_optimal_path[-1][0]) or\
             (Z_beacons[-1][1] != RRT_star_optimal_path[-1][1])):
         # print(Z_beacons[-1])
         # print(RRT_star_optimal_path)
@@ -127,6 +126,7 @@ def path_optimization(entire_region, t, RRT_star_optimal_path):
             if ((RRT_star_optimal_path[i][0] == Z_beacons[-1][0]) and\
                 (RRT_star_optimal_path[i][1] == Z_beacons[-1][1])):
                 start_index = i
+
         for i in range(len(RRT_star_optimal_path), start_index, -1):
             parent = Z_beacons[-1]
             child = RRT_star_optimal_path[i-1]
@@ -137,7 +137,7 @@ def path_optimization(entire_region, t, RRT_star_optimal_path):
             if nodes_visible(entire_region, t, parent, child):
                 Z_beacons.append(child)
                 break
-    
+
     direct_cost = 0
     for i in range(len(Z_beacons)):
         if (i == (len(Z_beacons) - 1)):
@@ -241,7 +241,7 @@ def eucledian_distance(x1, y1, x2, y2):
 #--------------------------------------------------------------------------------------------------
 def steer(z_nearest, z_rand):
     """! Finds the new node between z_nearest and z_rand after performing action on z_nearest """
-    action_step_size = 5
+    action_step_size = 8
     if (eucledian_distance(z_nearest[0], z_nearest[1], z_rand[0], z_rand[1]) > 5):
         # Angle between the horizontal and the vector connecting z_nearest to z_rand
         angle_with_horizontal = np.arctan2((z_rand[1] - z_nearest[1]), (z_rand[0] - z_nearest[0]))
@@ -337,8 +337,8 @@ def RRT_star_smart(entire_region, t):
     @param t Threshold for the matrix map
     @return None
     """
-    num_iteration = 5000 # Iteration number for the search
-    biasing_ratio = 2 # Could implement a dynamic biasing ratio (Eqn (1) in Jauwaria article)
+    num_iteration = 3000 # Iteration number for the search
+    biasing_ratio = 5 # Could implement a dynamic biasing ratio (Eqn (1) in Jauwaria article)
     iter_at_soln = num_iteration # Iteration number when the initial path is found
     # By default iter_at_soln is set to num_iteration. It'll change once initial path is found
 
@@ -374,7 +374,7 @@ def RRT_star_smart(entire_region, t):
 
         # Check if z_new is in the obstacle region
         if (obstacle_free(z_new, entire_region, t) == True):
-            search_radius = 5 # Ideally, action_step_size has to be the same as well
+            search_radius = 8 # Ideally, action_step_size has to be the same as well
             z_near = near(entire_region, t, z_new, search_radius)
             z_min, cost_to_come = chosen_parent(z_near, z_nearest, z_new, entire_region, t)
 
@@ -397,12 +397,12 @@ def RRT_star_smart(entire_region, t):
                 print(f'Initial RRT* cost: {cost_to_come}')
                 RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
                 # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
-                z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
+                z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path, i)
             
         if (path_found == "yes"):
             RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
             # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
-            Z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
+            Z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path, i)
 
         if direct_cost_new < direct_cost_old:
             direct_cost_old = direct_cost_new
@@ -419,7 +419,7 @@ def RRT_star_smart(entire_region, t):
     goal_mat_x,goal_mat_y = matrix_indices(z_goal, t)
     print(f'Final RRT* with intelligent sampling cost: {entire_region[goal_mat_x][goal_mat_y][2]}')
     print(f'RRT*-Smart cost: {RRT_star_Smart_cost}')
-
+    # print(Z_beacons)
     animate_RRT_star_Smart(entire_region, t, RRT_star_optimal_path, z_beacons)
     return
 #--------------------------------------------------------------------------------------------------
