@@ -51,7 +51,7 @@ def animate_RRT_star_Smart(entire_region, t, optimal_path, z_beacons):
     for beacon in z_beacons:
         x_beacon.append(beacon[0])
         y_beacon.append(beacon[1])
-    plt.plot(x_beacon, y_beacon, linewidth = '1', color = 'green')
+    # plt.plot(x_beacon, y_beacon, linewidth = '1', color = 'green')
 
     plt.xlim([0,int(100)])
     plt.ylim([0,int(100)])
@@ -241,7 +241,7 @@ def eucledian_distance(x1, y1, x2, y2):
 #--------------------------------------------------------------------------------------------------
 def steer(z_nearest, z_rand):
     """! Finds the new node between z_nearest and z_rand after performing action on z_nearest """
-    action_step_size = 8
+    action_step_size = 3
     if (eucledian_distance(z_nearest[0], z_nearest[1], z_rand[0], z_rand[1]) > 5):
         # Angle between the horizontal and the vector connecting z_nearest to z_rand
         angle_with_horizontal = np.arctan2((z_rand[1] - z_nearest[1]), (z_rand[0] - z_nearest[0]))
@@ -359,11 +359,11 @@ def RRT_star_smart(entire_region, t):
     RRT_star_optimal_path = []
 
     for i in range(1, num_iteration+1):
-        if ((iter_at_soln != num_iteration) and (((i - iter_at_soln) % biasing_ratio) == 0)):
-            z_rand = intelligent_sampling(z_beacons, entire_region, t)
-        else:
-            z_rand = random_sampling(entire_region, t)
-        # z_rand = random_sampling(entire_region, t)
+        # if ((iter_at_soln != num_iteration) and (((i - iter_at_soln) % biasing_ratio) == 0)):
+        #     z_rand = intelligent_sampling(z_beacons, entire_region, t)
+        # else:
+        #     z_rand = random_sampling(entire_region, t)
+        z_rand = random_sampling(entire_region, t)
         
         # Getting the nearest node to z_rand
         z_nearest = nearest(entire_region, z_rand, t)
@@ -374,7 +374,7 @@ def RRT_star_smart(entire_region, t):
 
         # Check if z_new is in the obstacle region
         if (obstacle_free(z_new, entire_region, t) == True):
-            search_radius = 8 # Ideally, action_step_size has to be the same as well
+            search_radius = 3 # Ideally, action_step_size has to be the same as well
             z_near = near(entire_region, t, z_new, search_radius)
             z_min, cost_to_come = chosen_parent(z_near, z_nearest, z_new, entire_region, t)
 
@@ -419,7 +419,7 @@ def RRT_star_smart(entire_region, t):
     goal_mat_x,goal_mat_y = matrix_indices(z_goal, t)
     print(f'Final RRT* with intelligent sampling cost: {entire_region[goal_mat_x][goal_mat_y][2]}')
     print(f'RRT*-Smart cost: {RRT_star_Smart_cost}')
-    # print(Z_beacons)
+
     animate_RRT_star_Smart(entire_region, t, RRT_star_optimal_path, z_beacons)
     return
 #--------------------------------------------------------------------------------------------------
