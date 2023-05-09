@@ -3,10 +3,10 @@ Description: Implementation of RRT*-Smart algorithm on a point robot
 Date: 5/09/2023
 Author: Sagar Ojha (as03050@umd.edu), Fnu Obaid Ur Rahman (obdurhmn@umd.edu)
 """
-import heapq as hq
 import numpy as np
 import time
 import cv2
+import copy
 import matplotlib.pyplot as plt
 
 #--------------------------------------------------------------------------------------------------
@@ -49,6 +49,7 @@ def animate_RRT_star_Smart(entire_region, t, optimal_path, z_beacons):
         plt.plot(x_opt, y_opt, linewidth = '1', color = 'black')
     
     for beacon in z_beacons:
+        print(beacon)
         x_beacon.append(beacon[0])
         y_beacon.append(beacon[1])
     plt.plot(x_beacon, y_beacon, linewidth = '1', color = 'green')
@@ -114,8 +115,8 @@ def nodes_visible(entire_region, t, parent, child):
 def path_optimization(entire_region, t, RRT_star_optimal_path):
     """! Returns the array that has successive beacon nodes and the direct cost """
     Z_beacons = [RRT_star_optimal_path[0]]
-    mat_x_final, mat_y_final = matrix_indices(RRT_star_optimal_path[-1], t)
-    direct_cost = entire_region[mat_x_final][mat_y_final][2]
+    # mat_x_final, mat_y_final = matrix_indices(RRT_star_optimal_path[-1], t)
+    # direct_cost = entire_region[mat_x_final][mat_y_final][2]
 
     while ((Z_beacons[-1][0] != RRT_star_optimal_path[-1][0]) and\
             (Z_beacons[-1][1] != RRT_star_optimal_path[-1][1])):
@@ -136,6 +137,13 @@ def path_optimization(entire_region, t, RRT_star_optimal_path):
             if nodes_visible(entire_region, t, parent, child):
                 Z_beacons.append(child)
                 break
+    
+    direct_cost = 0
+    for i in range(len(Z_beacons)):
+        if (i == (len(Z_beacons) - 1)):
+            break
+        direct_cost += eucledian_distance(Z_beacons[i][0], Z_beacons[i][1],\
+             Z_beacons[i+1][0], Z_beacons[i+1][1])
 
     return Z_beacons, direct_cost
 #--------------------------------------------------------------------------------------------------
@@ -174,7 +182,8 @@ def rewire(entire_region, t , z_near, z_new, z_min):
         mat_x, mat_y = matrix_indices(nodes, t)
         distance_from_z_new = eucledian_distance(z_new[0], z_new[1], nodes[0], nodes[1])
         new_cost = parent_cost + distance_from_z_new
-        if (new_cost < entire_region[mat_x][mat_y][2]):
+        if ((new_cost < entire_region[mat_x][mat_y][2]) and \
+            (nodes_visible(entire_region, t, z_new, nodes))):
             entire_region[mat_x][mat_y] = np.array([z_new[0], z_new[1], new_cost])
 #--------------------------------------------------------------------------------------------------
 
@@ -232,7 +241,7 @@ def eucledian_distance(x1, y1, x2, y2):
 #--------------------------------------------------------------------------------------------------
 def steer(z_nearest, z_rand):
     """! Finds the new node between z_nearest and z_rand after performing action on z_nearest """
-    action_step_size = 4
+    action_step_size = 5
     if (eucledian_distance(z_nearest[0], z_nearest[1], z_rand[0], z_rand[1]) > 5):
         # Angle between the horizontal and the vector connecting z_nearest to z_rand
         angle_with_horizontal = np.arctan2((z_rand[1] - z_nearest[1]), (z_rand[0] - z_nearest[0]))
@@ -365,16 +374,17 @@ def RRT_star_smart(entire_region, t):
 
         # Check if z_new is in the obstacle region
         if (obstacle_free(z_new, entire_region, t) == True):
-            search_radius = 3 # Ideally, action_step_size has to be the same as well
+            search_radius = 5 # Ideally, action_step_size has to be the same as well
             z_near = near(entire_region, t, z_new, search_radius)
             z_min, cost_to_come = chosen_parent(z_near, z_nearest, z_new, entire_region, t)
 
             mat_x_new, mat_y_new = matrix_indices(z_new, t)
-            entire_region[mat_x_new][mat_y_new] = np.array([z_min[0], z_min[1], cost_to_come])
+            if (nodes_visible(entire_region, t, z_min, z_new)):
+                entire_region[mat_x_new][mat_y_new] = np.array([z_min[0], z_min[1], cost_to_come])
             # We store the physical coordinates of the parent node rather than the parent's matrix indices
             # Above steps are equivalent to insertnode function in the algorithm
             # Upto here is RRT----------------------------------------------------------------
-            rewire(entire_region, t, z_near, z_new, z_min)
+                rewire(entire_region, t, z_near, z_new, z_min)
             # Upto here is RRT*---------------------------------------------------------------
 
             if (initial_path_found(z_goal, z_new) and (iter_at_soln == num_iteration)):
@@ -382,17 +392,30 @@ def RRT_star_smart(entire_region, t):
                 z_goal = z_new # Done just to repeat the same simulation, thus easier to debug
                 path_found = "yes"
                 direct_cost_old = cost_to_come
-                print(f'Iteration when path found: {iter_at_soln}')
-                print(f'Goal is: {z_goal}')
+                print(f'Goal: {z_goal}')
+                print(f'Iteration when initial path found: {iter_at_soln}')
+                print(f'RRT* cost: {cost_to_come}')
+                RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
+                # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
+                z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
             
         if (path_found == "yes"):
             RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
             # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
-            z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
+            Z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
 
         if direct_cost_new < direct_cost_old:
             direct_cost_old = direct_cost_new
-            z_beacons = z_beacons
+            z_beacons = copy.deepcopy(Z_beacons)
+            # Necessary to deep copy otherwise the if condition is not effective
+
+    RRT_star_Smart_cost = 0
+    for i in range(len(z_beacons)):
+        if (i == (len(z_beacons) - 1)):
+            break
+        RRT_star_Smart_cost += eucledian_distance(z_beacons[i][0], z_beacons[i][1],\
+             z_beacons[i+1][0], z_beacons[i+1][1])
+    print(f'RRT*-Smart cost: {RRT_star_Smart_cost}')
 
     animate_RRT_star_Smart(entire_region, t, RRT_star_optimal_path, z_beacons)
     return
