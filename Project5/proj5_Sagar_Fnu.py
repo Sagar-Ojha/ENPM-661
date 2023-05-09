@@ -394,7 +394,7 @@ def RRT_star_smart(entire_region, t):
                 direct_cost_old = cost_to_come
                 print(f'Goal: {z_goal}')
                 print(f'Iteration when initial path found: {iter_at_soln}')
-                print(f'RRT* cost: {cost_to_come}')
+                print(f'Initial RRT* cost: {cost_to_come}')
                 RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
                 # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
                 z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
@@ -415,6 +415,9 @@ def RRT_star_smart(entire_region, t):
             break
         RRT_star_Smart_cost += eucledian_distance(z_beacons[i][0], z_beacons[i][1],\
              z_beacons[i+1][0], z_beacons[i+1][1])
+    
+    goal_mat_x,goal_mat_y = matrix_indices(z_goal, t)
+    print(f'Final RRT* with intelligent sampling cost: {entire_region[goal_mat_x][goal_mat_y][2]}')
     print(f'RRT*-Smart cost: {RRT_star_Smart_cost}')
 
     animate_RRT_star_Smart(entire_region, t, RRT_star_optimal_path, z_beacons)
