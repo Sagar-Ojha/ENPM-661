@@ -111,7 +111,7 @@ def nodes_visible(entire_region, t, parent, child):
 #--------------------------------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------------------------------
-def path_optimization(entire_region, t, RRT_star_optimal_path, j):
+def path_optimization(entire_region, t, RRT_star_optimal_path):
     """! Returns the array that has successive beacon nodes and the direct cost """
     Z_beacons = [RRT_star_optimal_path[0]]
     # mat_x_final, mat_y_final = matrix_indices(RRT_star_optimal_path[-1], t)
@@ -397,12 +397,12 @@ def RRT_star_smart(entire_region, t):
                 print(f'Initial RRT* cost: {cost_to_come}')
                 RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
                 # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
-                z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path, i)
+                z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
             
         if (path_found == "yes"):
             RRT_star_optimal_path = optimal_path_RRT_star(entire_region, t, z_goal)
             # Cost is compared in optimal_path_RRT_star funciton. So, no need to pass z_init
-            Z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path, i)
+            Z_beacons, direct_cost_new = path_optimization(entire_region, t, RRT_star_optimal_path)
 
         if direct_cost_new < direct_cost_old:
             direct_cost_old = direct_cost_new
