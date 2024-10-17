@@ -27,7 +27,7 @@ PART 01:
 ========
 Go to Part01 directory and in the terminal, type: python3 proj3p2_Sagar_Fnu.py.
 Give the inputs as shown below when prompted.
-Enter the clearance amount (mm): 15
+Enter the clearance amount (mm): 5
 Enter the starting x and y position in cm separated by a space: 20 20
 Enter the starting orientation of the robot (in deg): 135
 Enter the final x and y position in cm separated by a space: 550 20
